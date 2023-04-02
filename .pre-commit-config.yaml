@@ -1,0 +1,42 @@
+ci:
+    skip:
+      - cargo-check
+      - clippy
+      - fmt
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+    -   id: check-added-large-files
+    -   id: check-ast
+    -   id: check-executables-have-shebangs
+    -   id: check-json
+    -   id: check-merge-conflict
+    -   id: check-symlinks
+    -   id: check-toml
+    -   id: check-yaml
+    -   id: debug-statements
+    -   id: destroyed-symlinks
+    -   id: detect-private-key
+    -   id: end-of-file-fixer
+    -   id: fix-byte-order-marker
+    -   id: mixed-line-ending
+    -   id: trailing-whitespace
+-   repo: https://github.com/doublify/pre-commit-rust
+    rev: v1.0
+    hooks:
+    -   id: cargo-check
+        args: ["-p", "thermostazv2-stm32", "--target", "thumbv7m-none-eabi"]
+    -   id: clippy
+        args: ["-p", "thermostazv2-stm32", "--target", "thumbv7m-none-eabi", "--", "-W", "clippy::pedantic", "-W", "clippy::nursery", "-W", "clippy::unwrap_used", "-W", "clippy::expect_used"]
+-   repo: https://github.com/doublify/pre-commit-rust
+    rev: v1.0
+    hooks:
+    -   id: cargo-check
+        args: ["-p", "thermostazv2-drv", "-p", "thermostazv2-lib"]
+    -   id: clippy
+        args: ["-p", "thermostazv2-drv", "-p", "thermostazv2-lib", "--", "-W", "clippy::pedantic", "-W", "clippy::nursery", "-W", "clippy::unwrap_used", "-W", "clippy::expect_used"]
+-   repo: https://github.com/doublify/pre-commit-rust
+    rev: v1.0
+    hooks:
+    -   id: fmt

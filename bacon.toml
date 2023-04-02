@@ -1,0 +1,40 @@
+default_job = "clippy-esp"
+
+[jobs]
+
+[jobs.test]
+command = ["just", "test"]
+need_stdout = false
+
+[jobs.check-drv]
+command = ["just", "check-drv"]
+need_stdout = false
+
+[jobs.check-esp]
+command = ["just", "check-esp"]
+need_stdout = false
+
+[jobs.check-lib]
+command = ["just", "check-lib"]
+need_stdout = false
+
+[jobs.clippy-drv]
+command = ["just", "clippy-drv"]
+need_stdout = false
+
+[jobs.clippy-esp]
+command = ["just", "clippy-esp"]
+need_stdout = false
+
+[jobs.clippy-lib]
+command = ["just", "clippy-lib"]
+need_stdout = false
+
+[keybindings]
+t = "job:check-drv"
+s = "job:check-esp"
+r = "job:check-lib"
+c = "job:test"
+shift-t = "job:clippy-drv"
+shift-s = "job:clippy-esp"
+shift-r = "job:clippy-lib"

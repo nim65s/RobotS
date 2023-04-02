@@ -1,0 +1,12 @@
+[package]
+name = "robots-lib"
+version = "0.1.0"
+authors = ["Guilhem Saurel <guilhem.saurel@laas.fr>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+heapless = "0.7"
+postcard = { version = "1", features = ["postcard-derive", "experimental-derive"] }
+serde = { version = "1", default-features = false, features = ["derive"] }
+thiserror = { version = "1", package = "thiserror-core", default-features = false }
