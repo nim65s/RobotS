@@ -11,12 +11,12 @@ use embassy_time::{Duration, Timer};
 use esp32c3_hal::{
     clock::ClockControl,
     embassy, interrupt,
-    peripherals::{self, Peripherals, UART0},
+    peripherals::{self, Peripherals, UART0, UART1},
     prelude::*,
     riscv,
     timer::TimerGroup,
-    uart::config::AtCmdConfig,
-    Cpu, Rtc, Uart,
+    uart::{config::AtCmdConfig, config::Config, TxRxPins},
+    Cpu, Rtc, Uart, IO,
 };
 use esp_backtrace as _;
 use static_cell::StaticCell;
@@ -24,7 +24,16 @@ use static_cell::StaticCell;
 #[embassy_executor::task]
 async fn run1() {
     loop {
-        esp_println::println!("Hello world from embassy using esp-hal-async!");
+        critical_section::with(|cs| {
+            let mut serial0 = SERIAL0.borrow_ref_mut(cs);
+            let serial0 = serial0.as_mut().unwrap();
+            writeln!(serial0, "run1 serial0\r").ok();
+        });
+        critical_section::with(|cs| {
+            let mut serial1 = SERIAL1.borrow_ref_mut(cs);
+            let serial1 = serial1.as_mut().unwrap();
+            writeln!(serial1, "run1 serial1\r").ok();
+        });
         Timer::after(Duration::from_millis(1_000)).await;
     }
 }
@@ -32,23 +41,26 @@ async fn run1() {
 #[embassy_executor::task]
 async fn run2() {
     loop {
-        esp_println::println!("Bing!");
+        critical_section::with(|cs| {
+            let mut serial0 = SERIAL0.borrow_ref_mut(cs);
+            let serial0 = serial0.as_mut().unwrap();
+            writeln!(serial0, "run2 serial0\r").ok();
+        });
         Timer::after(Duration::from_millis(5_000)).await;
     }
 }
 
 static EXECUTOR: StaticCell<Executor> = StaticCell::new();
-static SERIAL: Mutex<RefCell<Option<Uart<UART0>>>> = Mutex::new(RefCell::new(None));
+static SERIAL0: Mutex<RefCell<Option<Uart<UART0>>>> = Mutex::new(RefCell::new(None));
+static SERIAL1: Mutex<RefCell<Option<Uart<UART1>>>> = Mutex::new(RefCell::new(None));
 
 #[entry]
 fn main() -> ! {
-    esp_println::println!("Init!");
     let peripherals = Peripherals::take();
     let system = peripherals.SYSTEM.split();
     let clocks = ClockControl::boot_defaults(system.clock_control).freeze();
 
     let mut rtc = Rtc::new(peripherals.RTC_CNTL);
-    let mut serial0 = Uart::new(peripherals.UART0);
     let timer_group0 = TimerGroup::new(peripherals.TIMG0, &clocks);
     let mut wdt0 = timer_group0.wdt;
     let timer_group1 = TimerGroup::new(peripherals.TIMG1, &clocks);
@@ -60,16 +72,32 @@ fn main() -> ! {
     wdt0.disable();
     wdt1.disable();
 
-    serial0.set_at_cmd(AtCmdConfig::new(None, None, None, b'#', None));
-    serial0.set_rx_fifo_full_threshold(30);
-    serial0.listen_at_cmd();
-    serial0.listen_rx_fifo_full();
+    let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
+    let pins1 = TxRxPins::new_tx_rx(
+        io.pins.gpio0.into_push_pull_output(),
+        io.pins.gpio1.into_floating_input(),
+    );
+
+    let serial0 = Uart::new(peripherals.UART0);
+    let mut serial1 = Uart::new_with_config(
+        peripherals.UART1,
+        Some(Config::default()),
+        Some(pins1),
+        &clocks,
+    );
+
+    serial1.set_at_cmd(AtCmdConfig::new(None, None, None, b'a', None));
+    serial1.listen_at_cmd();
 
     embassy::init(&clocks, timer_group0.timer0);
-    critical_section::with(|cs| SERIAL.borrow_ref_mut(cs).replace(serial0));
+
+    critical_section::with(|cs| {
+        SERIAL0.borrow_ref_mut(cs).replace(serial0);
+        SERIAL1.borrow_ref_mut(cs).replace(serial1);
+    });
 
     interrupt::enable(
-        peripherals::Interrupt::UART0,
+        peripherals::Interrupt::UART1,
         interrupt::Priority::Priority1,
     )
     .unwrap();
@@ -91,26 +119,20 @@ fn main() -> ! {
 }
 
 #[interrupt]
-fn UART0() {
+fn UART1() {
+    let mut cnt = 0;
     critical_section::with(|cs| {
-        let mut serial = SERIAL.borrow_ref_mut(cs);
-        let serial = serial.as_mut().unwrap();
+        let mut serial1 = SERIAL1.borrow_ref_mut(cs);
+        let serial1 = serial1.as_mut().unwrap();
 
-        let mut cnt = 0;
-        while let nb::Result::Ok(_c) = serial.read() {
+        while let nb::Result::Ok(_c) = serial1.read() {
             cnt += 1;
         }
-        writeln!(serial, "Read {} bytes", cnt,).ok();
-
-        writeln!(
-            serial,
-            "Interrupt AT-CMD: {} RX-FIFO-FULL: {}",
-            serial.at_cmd_interrupt_set(),
-            serial.rx_fifo_full_interrupt_set(),
-        )
-        .ok();
-
-        serial.reset_at_cmd_interrupt();
-        serial.reset_rx_fifo_full_interrupt();
+        serial1.reset_at_cmd_interrupt();
+    });
+    critical_section::with(|cs| {
+        let mut serial0 = SERIAL0.borrow_ref_mut(cs);
+        let serial0 = serial0.as_mut().unwrap();
+        writeln!(serial0, "Read {} bytes\r", cnt,).ok();
     });
 }
