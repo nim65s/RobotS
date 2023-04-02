@@ -7,7 +7,6 @@ mod relay;
 use crate::aht20::{SensorErr, SensorResult};
 use crate::relay::Relay;
 
-use heapless::Vec;
 use postcard::experimental::max_size::MaxSize;
 use serde::{Deserialize, Serialize};
 
@@ -46,10 +45,10 @@ pub enum Cmd {
 }
 
 /// Heapless vector which can contain the biggest Cmd plus 2 additionnal bytes for COBS
-pub type RLVec = Vec<u8, { Cmd::POSTCARD_MAX_SIZE + 2 }>;
+pub type Vec = heapless::Vec<u8, { Cmd::POSTCARD_MAX_SIZE + 2 }>;
 
 impl Cmd {
-    pub fn to_vec(&self) -> Result<RLVec> {
+    pub fn to_vec(&self) -> Result<Vec> {
         postcard::to_vec_cobs(&self).map_err(Error::Postcard)
     }
 

@@ -22,5 +22,8 @@ rustflags = [
   "--cfg", 'target_has_atomic="ptr"',
 ]
 
-#[unstable]
-#build-std = ["core"]
+[build]
+target = "riscv32imc-unknown-none-elf"
+
+[unstable]
+build-std = ["core"]

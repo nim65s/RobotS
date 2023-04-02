@@ -1,2 +1,3 @@
 [workspace]
-members = ["robots-esp", "robots-lib", "robots-drv"]
+members = ["robots-lib", "robots-drv"]
+exclude = ["robots-esp"]

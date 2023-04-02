@@ -20,6 +20,7 @@ use esp32c3_hal::{
 };
 use esp_backtrace as _;
 use static_cell::StaticCell;
+use robots_lib::{Cmd, Vec};
 
 #[embassy_executor::task]
 async fn run1() {
@@ -32,7 +33,10 @@ async fn run1() {
         critical_section::with(|cs| {
             let mut serial1 = SERIAL1.borrow_ref_mut(cs);
             let serial1 = serial1.as_mut().unwrap();
-            writeln!(serial1, "run1 serial1\r").ok();
+            let cmd = Cmd::Ping;
+            for c in cmd.to_vec().unwrap().iter() {
+                writeln!(serial1, "{c:?}\r").ok();
+            }
         });
         Timer::after(Duration::from_millis(1_000)).await;
     }
@@ -121,11 +125,13 @@ fn main() -> ! {
 #[interrupt]
 fn UART1() {
     let mut cnt = 0;
+    let mut vec = Vec::new();
     critical_section::with(|cs| {
         let mut serial1 = SERIAL1.borrow_ref_mut(cs);
         let serial1 = serial1.as_mut().unwrap();
 
-        while let nb::Result::Ok(_c) = serial1.read() {
+        while let nb::Result::Ok(c) = serial1.read() {
+            vec.push(c).unwrap();
             cnt += 1;
         }
         serial1.reset_at_cmd_interrupt();

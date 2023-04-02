@@ -131,10 +131,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "robots-drv"
-version = "0.1.0"
-
-[[package]]
 name = "robots-lib"
 version = "0.1.0"
 dependencies = [

@@ -10,11 +10,11 @@ pub struct SensorOk {
 
 impl SensorOk {
     #[must_use]
-    pub fn rh(&self) -> f64 {
+    pub fn rh(self) -> f64 {
         100.0 * f64::from(self.h) / (f64::from(1 << 20))
     }
     #[must_use]
-    pub fn celsius(&self) -> f64 {
+    pub fn celsius(self) -> f64 {
         (200.0 * f64::from(self.t) / (f64::from(1 << 20))) - 50.0
     }
 }
