@@ -633,6 +633,7 @@ version = "0.1.0"
 name = "robots-esp"
 version = "0.1.0"
 dependencies = [
+ "critical-section",
  "embassy-executor",
  "embassy-time 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "esp-backtrace",
