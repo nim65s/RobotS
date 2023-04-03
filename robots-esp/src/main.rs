@@ -19,25 +19,47 @@ use esp32c3_hal::{
     Cpu, Rtc, Uart, IO,
 };
 use esp_backtrace as _;
+use robots_lib::{Cmd, Error, Vec};
 use static_cell::StaticCell;
-use robots_lib::{Cmd, Vec};
+
+fn monitor(log: &str) {
+    critical_section::with(|cs| {
+        let mut serial = SERIAL0.borrow_ref_mut(cs);
+        let serial = serial.as_mut().unwrap();
+        writeln!(serial, "{log}\r").ok();
+    });
+}
+
+fn send_cmd(cmd: Cmd) {
+    critical_section::with(|cs| {
+        let mut serial = SERIAL1.borrow_ref_mut(cs);
+        let serial = serial.as_mut().unwrap();
+
+        for c in cmd.to_vec().unwrap().iter() {
+            writeln!(serial, "{c:?}\r").ok();
+        }
+    });
+}
+
+fn recv_cmd() -> Result<Cmd, Error> {
+    let mut vec = Vec::new();
+    critical_section::with(|cs| {
+        let mut serial = SERIAL1.borrow_ref_mut(cs);
+        let serial = serial.as_mut().unwrap();
+
+        while let nb::Result::Ok(c) = serial.read() {
+            vec.push(c).unwrap();
+        }
+        serial.reset_at_cmd_interrupt();
+    });
+    Cmd::from_vec(&mut vec)
+}
 
 #[embassy_executor::task]
 async fn run1() {
     loop {
-        critical_section::with(|cs| {
-            let mut serial0 = SERIAL0.borrow_ref_mut(cs);
-            let serial0 = serial0.as_mut().unwrap();
-            writeln!(serial0, "run1 serial0\r").ok();
-        });
-        critical_section::with(|cs| {
-            let mut serial1 = SERIAL1.borrow_ref_mut(cs);
-            let serial1 = serial1.as_mut().unwrap();
-            let cmd = Cmd::Ping;
-            for c in cmd.to_vec().unwrap().iter() {
-                writeln!(serial1, "{c:?}\r").ok();
-            }
-        });
+        monitor("run1");
+        send_cmd(Cmd::Ping);
         Timer::after(Duration::from_millis(1_000)).await;
     }
 }
@@ -45,11 +67,7 @@ async fn run1() {
 #[embassy_executor::task]
 async fn run2() {
     loop {
-        critical_section::with(|cs| {
-            let mut serial0 = SERIAL0.borrow_ref_mut(cs);
-            let serial0 = serial0.as_mut().unwrap();
-            writeln!(serial0, "run2 serial0\r").ok();
-        });
+        monitor("run2");
         Timer::after(Duration::from_millis(5_000)).await;
     }
 }
@@ -124,21 +142,6 @@ fn main() -> ! {
 
 #[interrupt]
 fn UART1() {
-    let mut cnt = 0;
-    let mut vec = Vec::new();
-    critical_section::with(|cs| {
-        let mut serial1 = SERIAL1.borrow_ref_mut(cs);
-        let serial1 = serial1.as_mut().unwrap();
-
-        while let nb::Result::Ok(c) = serial1.read() {
-            vec.push(c).unwrap();
-            cnt += 1;
-        }
-        serial1.reset_at_cmd_interrupt();
-    });
-    critical_section::with(|cs| {
-        let mut serial0 = SERIAL0.borrow_ref_mut(cs);
-        let serial0 = serial0.as_mut().unwrap();
-        writeln!(serial0, "Read {} bytes\r", cnt,).ok();
-    });
+    let cmd = recv_cmd().unwrap();
+    monitor("Read byte(s)");
 }
