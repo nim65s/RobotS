@@ -629,6 +629,7 @@ dependencies = [
  "cfg-if",
  "critical-section",
  "embassy-executor",
+ "embassy-sync 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "embassy-time 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "esp-backtrace",
  "esp-hal-common",

@@ -7,6 +7,8 @@
 use core::{cell::RefCell, fmt::Write};
 use critical_section::Mutex;
 use embassy_executor::Executor;
+use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
+use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Timer};
 use esp32c3_hal::{
     clock::ClockControl,
@@ -68,13 +70,14 @@ async fn run1() {
 async fn run2() {
     loop {
         monitor("run2");
-        Timer::after(Duration::from_millis(5_000)).await;
+        let _cmd = CMD.wait().await;
     }
 }
 
 static EXECUTOR: StaticCell<Executor> = StaticCell::new();
 static SERIAL0: Mutex<RefCell<Option<Uart<UART0>>>> = Mutex::new(RefCell::new(None));
 static SERIAL1: Mutex<RefCell<Option<Uart<UART1>>>> = Mutex::new(RefCell::new(None));
+static CMD: Signal<CriticalSectionRawMutex, Cmd> = Signal::new();
 
 #[entry]
 fn main() -> ! {
@@ -144,4 +147,5 @@ fn main() -> ! {
 fn UART1() {
     let cmd = recv_cmd().unwrap();
     monitor("Read byte(s)");
+    CMD.signal(cmd);
 }
