@@ -4,6 +4,7 @@ use futures::{
     SinkExt, StreamExt,
 };
 use tokio_serial::SerialStream;
+use tokio_serial::{SerialPortBuilder, SerialPortBuilderExt};
 use tokio_util::codec::{Decoder, Framed};
 
 use robots_lib::Cmd;
@@ -61,4 +62,14 @@ impl Driver {
     pub fn receiver(&self) -> Receiver<Cmd> {
         self.rx_recv.clone()
     }
+}
+
+pub fn serve(port: SerialPortBuilder) -> Result<(Sender<Cmd>, Receiver<Cmd>)> {
+    let mut port = port.open_native_async()?;
+    port.set_exclusive(false)?;
+    let mut drv = Driver::new(port);
+    let send = drv.sender();
+    let recv = drv.receiver();
+    tokio::spawn(async move { drv.run().await });
+    Ok((send, recv))
 }

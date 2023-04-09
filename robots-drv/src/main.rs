@@ -1,19 +1,14 @@
 use tokio::time::{sleep, Duration};
-use tokio_serial::SerialPortBuilderExt;
 
-use robots_drv::{Driver, Result};
+use robots_drv::{serve, Result};
 use robots_lib::Cmd;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let mut uart_port = serialport::new("/dev/ttyUSB0", 115_200).open_native_async()?;
-    uart_port.set_exclusive(false)?;
+    let uart_port = serialport::new("/dev/ttyUSB0", 115_200);
 
-    let mut driver = Driver::new(uart_port);
-    let sender = driver.sender();
-    let receiver = driver.receiver();
+    let (sender, receiver) = serve(uart_port)?;
 
-    tokio::spawn(async move { driver.run().await });
     tokio::spawn(async move {
         while let Ok(cmd) = receiver.recv().await {
             println!("received {cmd:?}");
