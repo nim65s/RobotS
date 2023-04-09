@@ -38,7 +38,7 @@ fn send_cmd(cmd: Cmd) {
         let serial = serial.as_mut().unwrap();
 
         for c in cmd.to_vec().unwrap().iter() {
-            writeln!(serial, "{c:?}\r").ok();
+            serial.write(*c).unwrap();
         }
     });
 }

@@ -35,4 +35,10 @@ esp:
 mon:
     just robots-esp/mon
 
+drv:
+    cargo run --package robots-drv
+
+dbg:
+    serial-monitor -p /dev/ttyUSB1
+
 all: clippy-lib clippy-esp clippy-drv test
