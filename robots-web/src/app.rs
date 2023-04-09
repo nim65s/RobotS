@@ -18,13 +18,15 @@ pub fn App(cx: Scope) -> impl IntoView {
         <Title text="Welcome to Leptos"/>
 
         // content for this welcome page
-        <Router>
-            <main>
-                <Routes>
-                    <Route path="" view=|cx| view! { cx, <HomePage/> }/>
-                </Routes>
-            </main>
-        </Router>
+        <body class="bg-slate-800">
+            <Router>
+                <main>
+                    <Routes>
+                        <Route path="" view=|cx| view! { cx, <HomePage/> }/>
+                    </Routes>
+                </main>
+            </Router>
+        </body>
     }
 }
 
@@ -35,8 +37,12 @@ fn HomePage(cx: Scope) -> impl IntoView {
     let (count, set_count) = create_signal(cx, 0);
     let on_click = move |_| set_count.update(|count| *count += 1);
 
+    let button = "text-slate-100 p-2 my-4 rounded-br-lg \
+                  bg-sky-700 hover:bg-sky-600 active:bg-sky-500 \
+                  shadow-lg hover:shadow-xl active:shadow-2xl";
+
     view! { cx,
-        <h1>"Welcome to Leptos!"</h1>
-        <button on:click=on_click>"Click Me: " {count}</button>
+        <h1 class="text-white text-4xl my-4">"Welcome to Leptos!"</h1>
+        <button class={button} on:click=on_click>"Click Me: " {count}</button>
     }
 }
