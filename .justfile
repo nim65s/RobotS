@@ -7,6 +7,7 @@ clippy_a := "-A clippy::missing-errors-doc -A clippy::missing-panics-doc"
 clippy_args := "-- " + clippy_w + " " + clippy_a
 lib := "--package robots-lib"
 drv := "--package robots-drv"
+web := "--package robots-web"
 
 check-lib:
     {{check}} {{lib}}
@@ -17,6 +18,9 @@ check-esp:
 check-drv:
     {{check}} {{drv}}
 
+check-web:
+    {{check}} {{web}}
+
 clippy-lib:
     {{clippy}} {{lib}}
 
@@ -25,6 +29,9 @@ clippy-esp:
 
 clippy-drv:
     {{clippy}} {{drv}}
+
+clippy-web:
+    {{clippy}} {{web}}
 
 test:
     {{test}} {{lib}}
@@ -42,6 +49,9 @@ esp-mon:
 
 drv:
     cargo run --package robots-drv
+
+web:
+    cargo leptos watch
 
 
 all: clippy-lib clippy-esp clippy-drv test
