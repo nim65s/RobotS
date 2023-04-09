@@ -101,9 +101,7 @@ fn main() -> ! {
     );
 
     serial0.set_at_cmd(AtCmdConfig::new(Some(0), Some(0), None, 0, Some(1)));
-    serial0.set_rx_fifo_full_threshold(3);
     serial0.listen_at_cmd();
-    serial0.listen_rx_fifo_full();
 
     critical_section::with(|cs| {
         SERIAL0.borrow_ref_mut(cs).replace(serial0);
@@ -149,7 +147,6 @@ fn UART0() {
         }
 
         serial.reset_at_cmd_interrupt();
-        serial.reset_rx_fifo_full_interrupt();
     });
-    CMD.signal(Cmd::from_vec(&mut vec[..3]).unwrap());
+    CMD.signal(Cmd::from_vec(&mut vec).unwrap());
 }
