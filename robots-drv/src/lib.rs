@@ -1,9 +1,9 @@
+use async_channel::{unbounded, Receiver, Sender};
 use bytes::{BufMut, BytesMut};
 use futures::{
     stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
 };
-use tokio::time::{sleep, Duration};
 use tokio_serial::SerialStream;
 use tokio_util::codec::{Decoder, Encoder, Framed};
 
@@ -16,6 +16,12 @@ pub enum Error {
 
     #[error("RobotS lib error: {0}")]
     Robots(#[from] robots_lib::Error),
+
+    #[error("Async channel SendError: {0}")]
+    SendError(#[from] async_channel::SendError<Cmd>),
+
+    #[error("Async channel RecvError: {0}")]
+    RecvError(#[from] async_channel::RecvError),
 }
 
 pub struct CmdCodec;
@@ -25,11 +31,9 @@ impl Decoder for CmdCodec {
     type Error = Error;
 
     fn decode(&mut self, src: &mut BytesMut) -> Result<Option<Self::Item>, Self::Error> {
-        //println!("decoding {src:02x}");
         let endframe = src.as_ref().iter().position(|b| *b == 0);
         Ok(if let Some(n) = endframe {
             let mut cmd = src.split_to(n + 1);
-            //println!("got {cmd:02x}");
             Some(Cmd::from_vec(&mut cmd)?)
         } else {
             None
@@ -48,26 +52,48 @@ impl Encoder<Cmd> for CmdCodec {
     }
 }
 
-pub type UartWriter = SplitSink<Framed<SerialStream, CmdCodec>, Cmd>;
-pub type UartReader = SplitStream<Framed<SerialStream, CmdCodec>>;
-
-pub async fn recv_serial(mut uart_reader: UartReader) {
-    println!("receiving...");
-    loop {
-        match uart_reader.next().await {
-            Some(Ok(cmd)) => println!("received {cmd:?}"),
-            Some(Err(e)) => println!("received err {e:?}"),
-            None => println!("received nothing."),
-        }
-    }
+pub struct Drv {
+    writer: SplitSink<Framed<SerialStream, CmdCodec>, Cmd>,
+    reader: SplitStream<Framed<SerialStream, CmdCodec>>,
+    rx_send: Sender<Cmd>,
+    rx_recv: Receiver<Cmd>,
+    tx_send: Sender<Cmd>,
+    tx_recv: Receiver<Cmd>,
 }
 
-pub async fn send_serial(mut uart_writer: UartWriter) {
-    for _ in 0..7 {
-        for cmd in [Cmd::Get, Cmd::Ping, Cmd::Pong] {
-            println!("sending {cmd:?}...");
-            uart_writer.send(cmd).await.unwrap();
-            sleep(Duration::from_millis(500)).await;
+impl Drv {
+    pub fn new(port: SerialStream) -> Self {
+        let (writer, reader) = CmdCodec.framed(port).split();
+        let (rx_send, rx_recv) = unbounded();
+        let (tx_send, tx_recv) = unbounded();
+        Self {
+            writer,
+            reader,
+            rx_send,
+            rx_recv,
+            tx_send,
+            tx_recv,
         }
+    }
+
+    pub async fn run(&mut self) -> Result<(), Error> {
+        loop {
+            tokio::select! {
+                Some(cmd) = self.reader.next() => {
+                    self.rx_send.send(cmd?).await?;
+                }
+                Ok(cmd) = self.tx_recv.recv() => {
+                    self.writer.send(cmd).await?;
+                }
+            }
+        }
+    }
+
+    pub fn sender(&self) -> Sender<Cmd> {
+        self.tx_send.clone()
+    }
+
+    pub fn receiver(&self) -> Receiver<Cmd> {
+        self.rx_recv.clone()
     }
 }

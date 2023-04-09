@@ -1,24 +1,31 @@
-use futures::{future::FutureExt, pin_mut, select, stream::StreamExt};
+use tokio::time::{sleep, Duration};
 use tokio_serial::SerialPortBuilderExt;
-use tokio_util::codec::Decoder;
 
-use robots_drv::{recv_serial, send_serial, CmdCodec};
+use robots_drv::Drv;
+use robots_lib::Cmd;
 
 #[tokio::main]
 async fn main() -> tokio_serial::Result<()> {
     let mut uart_port = serialport::new("/dev/ttyUSB0", 115_200).open_native_async()?;
     uart_port.set_exclusive(false)?;
 
-    let (uart_writer, uart_reader) = CmdCodec.framed(uart_port).split();
+    let mut drv = Drv::new(uart_port);
+    let sender = drv.sender();
+    let receiver = drv.receiver();
 
-    let t1 = recv_serial(uart_reader).fuse();
-    let t2 = send_serial(uart_writer).fuse();
+    tokio::spawn(async move { drv.run().await });
+    tokio::spawn(async move {
+        while let Ok(cmd) = receiver.recv().await {
+            println!("received {cmd:?}");
+        }
+    });
 
-    // https://rust-lang.github.io/async-book/06_multiple_futures/03_select.html
-    pin_mut!(t1, t2);
-    select! {
-        () = t1 => println!("task one completed first"),
-        () = t2 => println!("task two completed first"),
+    for _ in 0..7 {
+        for cmd in [Cmd::Get, Cmd::Ping, Cmd::Pong] {
+            println!("sending {cmd:?}...");
+            sender.send(cmd).await.unwrap();
+            sleep(Duration::from_millis(500)).await;
+        }
     }
 
     Ok(())
