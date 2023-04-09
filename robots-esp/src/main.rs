@@ -100,7 +100,7 @@ fn main() -> ! {
         &clocks,
     );
 
-    serial0.set_at_cmd(AtCmdConfig::new(None, None, None, 0, None));
+    serial0.set_at_cmd(AtCmdConfig::new(Some(0), Some(0), None, 0, Some(1)));
     serial0.set_rx_fifo_full_threshold(3);
     serial0.listen_at_cmd();
     serial0.listen_rx_fifo_full();
