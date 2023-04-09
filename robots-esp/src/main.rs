@@ -21,20 +21,23 @@ use esp32c3_hal::{
     Cpu, Rtc, Uart, IO,
 };
 use esp_backtrace as _;
-use robots_lib::{Cmd, Error, Vec};
+use robots_lib::{Cmd, Vec};
 use static_cell::StaticCell;
 
-fn monitor(log: &str) {
-    critical_section::with(|cs| {
-        let mut serial = SERIAL0.borrow_ref_mut(cs);
-        let serial = serial.as_mut().unwrap();
-        writeln!(serial, "{log}\r").ok();
-    });
+macro_rules! monitor {
+    ($input:tt) => {
+        critical_section::with(|cs| {
+            let mut serial = SERIAL1.borrow_ref_mut(cs);
+            let serial = serial.as_mut().unwrap();
+            write!(serial, $input).ok();
+            writeln!(serial, "\r").ok();
+        });
+    };
 }
 
 fn send_cmd(cmd: Cmd) {
     critical_section::with(|cs| {
-        let mut serial = SERIAL1.borrow_ref_mut(cs);
+        let mut serial = SERIAL0.borrow_ref_mut(cs);
         let serial = serial.as_mut().unwrap();
 
         for c in cmd.to_vec().unwrap().iter() {
@@ -43,24 +46,10 @@ fn send_cmd(cmd: Cmd) {
     });
 }
 
-fn recv_cmd() -> Result<Cmd, Error> {
-    let mut vec = Vec::new();
-    critical_section::with(|cs| {
-        let mut serial = SERIAL1.borrow_ref_mut(cs);
-        let serial = serial.as_mut().unwrap();
-
-        while let nb::Result::Ok(c) = serial.read() {
-            vec.push(c).unwrap();
-        }
-        serial.reset_at_cmd_interrupt();
-    });
-    Cmd::from_vec(&mut vec)
-}
-
 #[embassy_executor::task]
 async fn run1() {
     loop {
-        monitor("run1");
+        monitor!("run1");
         send_cmd(Cmd::Ping);
         Timer::after(Duration::from_millis(1_000)).await;
     }
@@ -69,8 +58,8 @@ async fn run1() {
 #[embassy_executor::task]
 async fn run2() {
     loop {
-        monitor("run2");
-        let _cmd = CMD.wait().await;
+        let cmd = CMD.wait().await;
+        monitor!("run2: {cmd:?}");
     }
 }
 
@@ -103,18 +92,18 @@ fn main() -> ! {
         io.pins.gpio1.into_floating_input(),
     );
 
-    let serial0 = Uart::new(peripherals.UART0);
-    let mut serial1 = Uart::new_with_config(
+    let mut serial0 = Uart::new(peripherals.UART0);
+    let serial1 = Uart::new_with_config(
         peripherals.UART1,
         Some(Config::default()),
         Some(pins1),
         &clocks,
     );
 
-    serial1.set_at_cmd(AtCmdConfig::new(None, None, None, b'a', None));
-    serial1.listen_at_cmd();
-
-    embassy::init(&clocks, timer_group0.timer0);
+    serial0.set_at_cmd(AtCmdConfig::new(None, None, None, 0, None));
+    serial0.set_rx_fifo_full_threshold(3);
+    serial0.listen_at_cmd();
+    serial0.listen_rx_fifo_full();
 
     critical_section::with(|cs| {
         SERIAL0.borrow_ref_mut(cs).replace(serial0);
@@ -122,10 +111,13 @@ fn main() -> ! {
     });
 
     interrupt::enable(
-        peripherals::Interrupt::UART1,
+        peripherals::Interrupt::UART0,
         interrupt::Priority::Priority1,
     )
     .unwrap();
+
+    embassy::init(&clocks, timer_group0.timer0);
+
     interrupt::set_kind(
         Cpu::ProCpu,
         interrupt::CpuInterrupt::Interrupt1, // Interrupt 1 handles priority one interrupts
@@ -136,6 +128,8 @@ fn main() -> ! {
         riscv::interrupt::enable();
     }
 
+    monitor!("Hello");
+
     let executor = EXECUTOR.init(Executor::new());
     executor.run(|spawner| {
         spawner.spawn(run1()).ok();
@@ -144,8 +138,18 @@ fn main() -> ! {
 }
 
 #[interrupt]
-fn UART1() {
-    let cmd = recv_cmd().unwrap();
-    monitor("Read byte(s)");
-    CMD.signal(cmd);
+fn UART0() {
+    let mut vec = Vec::new();
+    critical_section::with(|cs| {
+        let mut serial = SERIAL0.borrow_ref_mut(cs);
+        let serial = serial.as_mut().unwrap();
+
+        while let nb::Result::Ok(c) = serial.read() {
+            vec.push(c).unwrap();
+        }
+
+        serial.reset_at_cmd_interrupt();
+        serial.reset_rx_fifo_full_interrupt();
+    });
+    CMD.signal(Cmd::from_vec(&mut vec[..3]).unwrap());
 }

@@ -6,7 +6,7 @@ use robots_drv::{recv_serial, send_serial, CmdCodec};
 
 #[tokio::main]
 async fn main() -> tokio_serial::Result<()> {
-    let mut uart_port = serialport::new("/dev/ttyUSB1", 115_200).open_native_async()?;
+    let mut uart_port = serialport::new("/dev/ttyUSB0", 115_200).open_native_async()?;
     uart_port.set_exclusive(false)?;
 
     let (uart_writer, uart_reader) = CmdCodec.framed(uart_port).split();

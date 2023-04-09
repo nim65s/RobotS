@@ -14,6 +14,3 @@ clippy:
 
 esp:
     cargo espflash --release {{port}}
-
-mon:
-    cargo espflash --release --monitor {{port}}

@@ -63,9 +63,11 @@ pub async fn recv_serial(mut uart_reader: UartReader) {
 }
 
 pub async fn send_serial(mut uart_writer: UartWriter) {
-    for cmd in [Cmd::Get, Cmd::Ping, Cmd::Pong] {
-        sleep(Duration::from_millis(8_000)).await;
-        println!("sending {cmd:?}...");
-        uart_writer.send(cmd).await.unwrap();
+    for _ in 0..7 {
+        for cmd in [Cmd::Get, Cmd::Ping, Cmd::Pong] {
+            println!("sending {cmd:?}...");
+            uart_writer.send(cmd).await.unwrap();
+            sleep(Duration::from_millis(500)).await;
+        }
     }
 }

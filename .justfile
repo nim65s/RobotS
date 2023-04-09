@@ -1,4 +1,4 @@
-port := "/dev/ttyUSB0"
+port := "/dev/ttyUSB1"
 check := "cargo check --color always"
 clippy := "cargo clippy --color always"
 test := "cargo test --color always"
@@ -33,12 +33,15 @@ esp:
     just robots-esp/esp
 
 mon:
-    just robots-esp/mon
+    serial-monitor -p {{port}}
+
+esp-mon:
+    just esp
+    sleep 1
+    just mon
 
 drv:
     cargo run --package robots-drv
 
-dbg:
-    serial-monitor -p /dev/ttyUSB1
 
 all: clippy-lib clippy-esp clippy-drv test
