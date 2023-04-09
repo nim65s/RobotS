@@ -1,25 +1,26 @@
-use tokio::time::{sleep, Duration};
+use tokio::time::{interval, Duration};
 
-use robots_drv::{serve, Result};
-use robots_lib::Cmd;
+use robots_drv::{driver, Cmd, Result};
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let uart_port = serialport::new("/dev/ttyUSB0", 115_200);
 
-    let (sender, receiver) = serve(uart_port)?;
+    let (tx, rx) = driver(uart_port)?;
 
     tokio::spawn(async move {
-        while let Ok(cmd) = receiver.recv().await {
+        while let Ok(cmd) = rx.recv().await {
             println!("received {cmd:?}");
         }
     });
 
+    let mut two_hz = interval(Duration::from_millis(500));
+
     for _ in 0..7 {
         for cmd in [Cmd::Get, Cmd::Ping, Cmd::Pong] {
+            two_hz.tick().await;
             println!("sending {cmd:?}...");
-            sender.send(cmd).await?;
-            sleep(Duration::from_millis(500)).await;
+            tx.send(cmd).await?;
         }
     }
 
