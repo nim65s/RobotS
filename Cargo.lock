@@ -2214,15 +2214,21 @@ version = "0.1.0"
 dependencies = [
  "actix-files",
  "actix-web",
+ "async-channel",
  "cfg-if",
  "console_error_panic_hook",
  "console_log",
+ "lazy_static",
  "leptos",
  "leptos_actix",
  "leptos_meta",
  "leptos_router",
  "log",
+ "robots-drv",
+ "serialport",
  "simple_logger",
+ "thiserror",
+ "tokio",
  "wasm-bindgen",
 ]
 

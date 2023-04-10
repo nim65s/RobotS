@@ -1,10 +1,8 @@
-use async_channel::{unbounded, Receiver, Sender};
 use futures::{
     stream::{SplitSink, SplitStream},
     SinkExt, StreamExt,
 };
-use tokio_serial::SerialStream;
-use tokio_serial::{SerialPortBuilder, SerialPortBuilderExt};
+use tokio_serial::{SerialPortBuilder, SerialPortBuilderExt, SerialStream};
 use tokio_util::codec::{Decoder, Framed};
 
 pub use robots_lib::Cmd;
@@ -12,24 +10,27 @@ pub use robots_lib::Cmd;
 mod codec;
 use codec::Codec;
 
-mod error;
-pub use error::Result;
+pub mod error;
+pub use error::{Error, Result};
+
+pub type Sender = async_channel::Sender<Cmd>;
+pub type Receiver = async_channel::Receiver<Cmd>;
 
 struct Driver {
     writer: SplitSink<Framed<SerialStream, Codec>, Cmd>,
     reader: SplitStream<Framed<SerialStream, Codec>>,
-    rx_send: Sender<Cmd>,
-    rx_recv: Receiver<Cmd>,
-    tx_send: Sender<Cmd>,
-    tx_recv: Receiver<Cmd>,
+    rx_send: Sender,
+    rx_recv: Receiver,
+    tx_send: Sender,
+    tx_recv: Receiver,
 }
 
 impl Driver {
     #[must_use]
     fn new(port: SerialStream) -> Self {
         let (writer, reader) = Codec.framed(port).split();
-        let (rx_send, rx_recv) = unbounded();
-        let (tx_send, tx_recv) = unbounded();
+        let (rx_send, rx_recv) = async_channel::unbounded();
+        let (tx_send, tx_recv) = async_channel::unbounded();
         Self {
             writer,
             reader,
@@ -54,7 +55,7 @@ impl Driver {
     }
 }
 
-pub fn driver(port: SerialPortBuilder) -> Result<(Sender<Cmd>, Receiver<Cmd>)> {
+pub fn driver(port: SerialPortBuilder) -> Result<(Sender, Receiver)> {
     let mut port = port.open_native_async()?;
     port.set_exclusive(false)?;
     let mut drv = Driver::new(port);
