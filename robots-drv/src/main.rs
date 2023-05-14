@@ -1,4 +1,4 @@
-use tokio::time::{interval, Duration};
+use tokio::time::{interval, sleep, Duration};
 
 use robots_drv::{driver, Cmd, Result};
 
@@ -14,6 +14,7 @@ async fn main() -> Result<()> {
         }
     });
 
+    sleep(Duration::from_millis(1_000)).await;
     let mut two_hz = interval(Duration::from_millis(500));
 
     for _ in 0..7 {

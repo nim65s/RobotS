@@ -7,7 +7,8 @@ clippy_a := "-A clippy::missing-errors-doc -A clippy::missing-panics-doc"
 clippy_args := "-- " + clippy_w + " " + clippy_a
 lib := "--package robots-lib"
 drv := "--package robots-drv"
-web := "--package robots-web"
+back := "--package robots-web -F ssr"
+front := "--package robots-web -F hydrate --target wasm32-unknown-unknown"
 
 check-lib:
     {{check}} {{lib}}
@@ -18,8 +19,11 @@ check-esp:
 check-drv:
     {{check}} {{drv}}
 
-check-web:
-    {{check}} {{web}}
+check-back:
+    {{check}} {{back}}
+
+check-front:
+    {{check}} {{front}}
 
 clippy-lib:
     {{clippy}} {{lib}}
@@ -30,8 +34,11 @@ clippy-esp:
 clippy-drv:
     {{clippy}} {{drv}}
 
-clippy-web:
-    {{clippy}} {{web}}
+clippy-back:
+    {{clippy}} {{back}}
+
+clippy-front:
+    {{clippy}} {{front}}
 
 test:
     {{test}} {{lib}}

@@ -13,4 +13,10 @@ pub enum Error {
     RecvError(#[from] async_channel::RecvError),
 }
 
+impl From<Error> for leptos::ServerFnError {
+    fn from(error: Error) -> Self {
+        Self::ServerError(error.to_string())
+    }
+}
+
 pub type Result<T> = core::result::Result<T, Error>;

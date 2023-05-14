@@ -7,9 +7,16 @@ if #[cfg(feature = "ssr")] {
 
     #[actix_web::main]
     async fn main() {
+        println!("main start");
+        //http::serve().await;
+        let http_serve = http::serve();
+        let uart_serve = uart::serve();
+        tokio::pin!(http_serve);
+        tokio::pin!(uart_serve);
+        println!("main serve");
         tokio::select! {
-            ret = http::serve() => eprintln!("http::serve ended with {ret:?}"),
-            ret = uart::serve() => eprintln!("uart::serve ended with {ret:?}"),
+            ret = http_serve => eprintln!("http::serve ended with {ret:?}"),
+            ret = uart_serve => eprintln!("uart::serve ended with {ret:?}"),
         }
     }
 } else {

@@ -2,6 +2,9 @@ use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
 
+use crate::cmd_sender::{CmdSender, CmdSenderProps};
+use crate::cmd_logger::{CmdLogger, CmdLoggerProps};
+
 #[component]
 pub fn App(cx: Scope) -> impl IntoView {
     // Provides context that manages stylesheets, titles, meta tags, etc.
@@ -44,5 +47,7 @@ fn HomePage(cx: Scope) -> impl IntoView {
     view! { cx,
         <h1 class="text-white text-4xl my-4">"Welcome to Leptos!"</h1>
         <button class={button} on:click=on_click>"Click Me: " {count}</button>
+        <CmdSender />
+        <CmdLogger />
     }
 }
