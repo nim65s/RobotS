@@ -2254,7 +2254,7 @@ dependencies = [
 name = "robots-drv"
 version = "0.1.0"
 dependencies = [
- "async-channel",
+ "broadcaster",
  "bytes 1.4.0",
  "futures 0.3.28",
  "robots-lib",

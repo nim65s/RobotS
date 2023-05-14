@@ -13,31 +13,24 @@ use codec::Codec;
 pub mod error;
 pub use error::{Error, Result};
 
-pub type Sender = async_channel::Sender<Cmd>;
-pub type Receiver = async_channel::Receiver<Cmd>;
+pub type Channel = broadcaster::BroadcastChannel<Cmd>;
 
 struct Driver {
     writer: SplitSink<Framed<SerialStream, Codec>, Cmd>,
     reader: SplitStream<Framed<SerialStream, Codec>>,
-    rx_send: Sender,
-    rx_recv: Receiver,
-    tx_send: Sender,
-    tx_recv: Receiver,
+    rx: Channel,
+    tx: Channel,
 }
 
 impl Driver {
     #[must_use]
     fn new(port: SerialStream) -> Self {
         let (writer, reader) = Codec.framed(port).split();
-        let (rx_send, rx_recv) = async_channel::unbounded();
-        let (tx_send, tx_recv) = async_channel::unbounded();
         Self {
             writer,
             reader,
-            rx_send,
-            rx_recv,
-            tx_send,
-            tx_recv,
+            rx: Channel::new(),
+            tx: Channel::new(),
         }
     }
 
@@ -45,9 +38,9 @@ impl Driver {
         loop {
             tokio::select! {
                 Some(cmd) = self.reader.next() => {
-                    self.rx_send.send(cmd?).await?;
+                    self.rx.send(&cmd?).await?;
                 }
-                Ok(cmd) = self.tx_recv.recv() => {
+                Some(cmd) = self.tx.next() => {
                     self.writer.send(cmd).await?;
                 }
             }
@@ -55,11 +48,11 @@ impl Driver {
     }
 }
 
-pub fn driver(port: SerialPortBuilder) -> Result<(Sender, Receiver)> {
+pub fn driver(port: SerialPortBuilder) -> Result<(Channel, Channel)> {
     let mut port = port.open_native_async()?;
     port.set_exclusive(false)?;
     let mut drv = Driver::new(port);
-    let ret = (drv.tx_send.clone(), drv.rx_recv.clone());
+    let ret = (drv.tx.clone(), drv.rx.clone());
     tokio::spawn(async move { drv.run().await });
     Ok(ret)
 }
