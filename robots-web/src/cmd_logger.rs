@@ -1,31 +1,33 @@
 use leptos::*;
 
-use robots_lib::Cmd;
-
-#[cfg(feature = "ssr")]
-use crate::{error::Error, queues::TX};
-
 #[component]
 pub fn CmdLogger(cx: Scope) -> impl IntoView {
-    let mut next_id = 0;
-    let (cmds, set_cmds) = create_signal(cx, Vec::<(u8, Cmd)>::new());
-    let on_click = move |_| {
-        set_cmds.update(|cmds| {
-            cmds.push((next_id, Cmd::Ping));
-            next_id += 1;
-        })
+    #[cfg(not(feature = "ssr"))]
+    let latest = {
+        use futures::StreamExt;
+        use gloo_net::eventsource::futures::EventSource;
+
+        let mut source = EventSource::new("/api/sse").expect("couldn't connect to SSE stream");
+        let s = create_signal_from_stream(
+            cx,
+            source.subscribe("msg").unwrap().map(|v| match v {
+                Err(e) => format!("sse connection error: {e:?}"),
+                Ok((_, v)) => match Cmd::from_sse(&v) {
+                    Err(e) => format!("sse decoding error: {e:?}"),
+                    Ok(Some(v)) => format!("{v:?}"),
+                    v => format!("{v:?}"),
+                },
+            }),
+        );
+
+        on_cleanup(cx, move || source.close());
+        s
     };
 
+    #[cfg(feature = "ssr")]
+    let (latest, _) = create_signal(cx, "");
+
     view! { cx,
-    <button on:click=on_click>"Ping"</button>
-        <ul>
-        <For
-        each=cmds
-        key=|cmd| cmd.0
-        view=move |cx, cmd| {
-            view! { cx, <li>{cmd.0}</li> }
-        }
-    />
-    </ul>
+        <span>{latest}</span>
     }
 }

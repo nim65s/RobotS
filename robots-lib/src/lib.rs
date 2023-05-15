@@ -1,6 +1,12 @@
 #![no_std]
 #![feature(error_in_core)]
 
+#[cfg(feature = "std")]
+extern crate std;
+
+#[cfg(feature = "std")]
+use actix_web::web::Bytes;
+
 mod aht20;
 mod relay;
 
@@ -11,13 +17,17 @@ use postcard::experimental::max_size::MaxSize;
 use serde::{Deserialize, Serialize};
 
 /// Errors handling in the code: fallible fonctions will return a Result over this
-#[derive(thiserror::Error, Debug, PartialEq, Eq)]
+#[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("postcard error {0}")]
     Postcard(postcard::Error),
 
     #[error("sensor error {0:?}")]
     Sensor(SensorErr),
+
+    #[cfg(any(feature = "std", feature = "wasm"))]
+    #[error("Serde Json error: {0}")]
+    SerdeJson(#[from] serde_json::Error),
 }
 
 pub type Result<T> = core::result::Result<T, Error>;
@@ -54,6 +64,23 @@ impl Cmd {
 
     pub fn from_vec(value: &mut [u8]) -> Result<Self> {
         postcard::from_bytes_cobs(value).map_err(Error::Postcard)
+    }
+
+    #[cfg(feature = "std")]
+    pub fn as_sse(self, event: &str) -> Result<Bytes> {
+        let json = serde_json::to_string(&self)?;
+        Ok(Bytes::from(std::format!(
+            "event: {event}\ndata: {json}\n\n"
+        )))
+    }
+
+    #[cfg(feature = "wasm")]
+    pub fn from_sse(value: &web_sys::MessageEvent) -> Result<Option<Cmd>> {
+        Ok(value
+            .data()
+            .as_string()
+            .map(|data| serde_json::from_str(&data))
+            .transpose()?)
     }
 }
 

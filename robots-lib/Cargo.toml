@@ -10,3 +10,10 @@ heapless = "0.7"
 postcard = { version = "1", features = ["postcard-derive", "experimental-derive"] }
 serde = { version = "1", default-features = false, features = ["derive"] }
 thiserror = { version = "1", package = "thiserror-core", default-features = false }
+serde_json = {version = "1", optional = true }
+web-sys = { version = "0.3.62", optional = true }
+actix-web = { version = "4", optional = true }
+
+[features]
+std = ["dep:serde_json", "dep:actix-web"]
+wasm = ["dep:web-sys", "dep:serde_json"]

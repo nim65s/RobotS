@@ -10,6 +10,7 @@ license = "MIT OR Apache-2.0"
 broadcaster = "1"
 bytes = "1.4.0"
 futures = "0.3.28"
+lazy_static = "1.4.0"
 robots-lib = { path = "../robots-lib" }
 serialport = "4.2.0"
 thiserror = "1.0.40"
