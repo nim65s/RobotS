@@ -1,3 +1,4 @@
+use chrono::prelude::*;
 use leptos::*;
 
 use robots_lib::Cmd;
@@ -14,11 +15,11 @@ pub async fn send_cmd(cmd: Cmd) -> Result<(), ServerFnError> {
 
 #[component]
 pub fn CmdLogger(cx: Scope) -> impl IntoView {
-    let (cmds, set_cmds) = create_signal::<Vec<(usize, Cmd)>>(cx, vec![]);
-    let (scmds, set_scmds) = create_signal::<Vec<(usize, Cmd)>>(cx, vec![]);
+    let (cmds, set_cmds) = create_signal::<Vec<(DateTime<Utc>, Cmd)>>(cx, vec![]);
+    let (scmds, set_scmds) = create_signal::<Vec<(DateTime<Utc>, Cmd)>>(cx, vec![]);
 
     let cmd_sender = create_action(cx, move |cmd: &Cmd| {
-        set_scmds.update(|cmds| cmds.push((cmds.len(), *cmd)));
+        set_scmds.update(|cmds| cmds.push((Utc::now(), *cmd)));
         send_cmd(*cmd)
     });
 
@@ -35,7 +36,7 @@ pub fn CmdLogger(cx: Scope) -> impl IntoView {
                 Ok((_, v)) => match Cmd::from_sse(&v) {
                     Err(e) => format!("sse decoding error: {e:?}"),
                     Ok(Some(v)) => {
-                        set_cmds.update(|cmds| cmds.push((cmds.len(), v)));
+                        set_cmds.update(|cmds| cmds.push((Utc::now(), v)));
                         log!("got {v:?}");
                         format!("{v:?}")
                     }
@@ -59,22 +60,22 @@ pub fn CmdLogger(cx: Scope) -> impl IntoView {
         <br />
         <div class="flex text-slate-100">
             <ol class="flex-auto">
-            <li class="underline">"Sent"</li>
-            <For each=cmds key=|cmd| cmd.0 view=move |cx, (_, cmd)| {
-                view! {
-                    cx,
-                    <li>{format!("{cmd:?}")}</li>
-                }
-            }/>
+                <li class="underline">"Sent"</li>
+                <For each=cmds key=|cmd| cmd.0 view=move |cx, (dt, cmd)| {
+                    view! {
+                        cx,
+                        <li>{format!("{dt:?} {cmd:?}")}</li>
+                    }
+                }/>
             </ol>
             <ol class="flex-auto">
-            <li class="underline">"Received"</li>
-            <For each=scmds key=|cmd| cmd.0 view=move |cx, (_, cmd)| {
-                view! {
-                    cx,
-                    <li>{format!("{cmd:?}")}</li>
-                }
-            }/>
+                <li class="underline">"Received"</li>
+                <For each=scmds key=|cmd| cmd.0 view=move |cx, (dt, cmd)| {
+                    view! {
+                        cx,
+                        <li>{format!("{dt:?} {cmd:?}")}</li>
+                    }
+                }/>
             </ol>
         </div>
     }

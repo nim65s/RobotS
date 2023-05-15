@@ -12,6 +12,7 @@ actix-web = { version = "4", optional = true, features = ["macros"] }
 async-channel = { version = "1.8.0", optional = true }
 broadcaster = { version = "1.0.0", optional = true }
 cfg-if = "1"
+chrono = "0.4.24"
 console_error_panic_hook = "0.1"
 console_log = "1"
 futures = { version = "0.3.28" }
@@ -37,9 +38,7 @@ web-sys = "0.3.61"
 
 [features]
 hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate", "dep:gloo-net", "robots-lib/wasm"]
-ssr = ["dep:actix-files", "dep:actix-web", "dep:lazy_static", "dep:leptos_actix", "dep:robots-drv",
-"dep:tokio", "leptos/ssr", "leptos_meta/ssr", "leptos_router/ssr", "dep:serialport", "dep:async-channel",
-"dep:broadcaster", "robots-lib/std"]
+ssr = ["dep:actix-files", "dep:actix-web", "dep:lazy_static", "dep:leptos_actix", "dep:robots-drv", "dep:tokio", "leptos/ssr", "leptos_meta/ssr", "leptos_router/ssr", "dep:serialport", "dep:async-channel", "dep:broadcaster", "robots-lib/std"]
 
 [package.metadata.leptos]
 output-name = "robots-web"
