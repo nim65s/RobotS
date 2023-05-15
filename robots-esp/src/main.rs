@@ -12,7 +12,9 @@ use embassy_sync::signal::Signal;
 use embassy_time::{Duration, Timer};
 use esp32c3_hal::{
     clock::ClockControl,
-    embassy, interrupt,
+    embassy,
+    gpio::{Event, Gpio9, Input, PullDown},
+    interrupt,
     peripherals::{self, Peripherals, UART0, UART1},
     prelude::*,
     riscv,
@@ -67,6 +69,7 @@ static EXECUTOR: StaticCell<Executor> = StaticCell::new();
 static SERIAL0: Mutex<RefCell<Option<Uart<UART0>>>> = Mutex::new(RefCell::new(None));
 static SERIAL1: Mutex<RefCell<Option<Uart<UART1>>>> = Mutex::new(RefCell::new(None));
 static CMD: Signal<CriticalSectionRawMutex, Cmd> = Signal::new();
+static BUTTON: Mutex<RefCell<Option<Gpio9<Input<PullDown>>>>> = Mutex::new(RefCell::new(None));
 
 #[entry]
 fn main() -> ! {
@@ -103,9 +106,13 @@ fn main() -> ! {
     serial0.set_at_cmd(AtCmdConfig::new(Some(0), Some(0), None, 0, Some(1)));
     serial0.listen_at_cmd();
 
+    let mut button = io.pins.gpio9.into_pull_down_input();
+    button.listen(Event::FallingEdge);
+
     critical_section::with(|cs| {
         SERIAL0.borrow_ref_mut(cs).replace(serial0);
         SERIAL1.borrow_ref_mut(cs).replace(serial1);
+        BUTTON.borrow_ref_mut(cs).replace(button)
     });
 
     interrupt::enable(
@@ -113,6 +120,7 @@ fn main() -> ! {
         interrupt::Priority::Priority1,
     )
     .unwrap();
+    interrupt::enable(peripherals::Interrupt::GPIO, interrupt::Priority::Priority3).unwrap();
 
     embassy::init(&clocks, timer_group0.timer0);
 
@@ -149,4 +157,17 @@ fn UART0() {
         serial.reset_at_cmd_interrupt();
     });
     CMD.signal(Cmd::from_vec(&mut vec).unwrap());
+}
+
+#[interrupt]
+fn GPIO() {
+    critical_section::with(|cs| {
+        monitor!("button");
+
+        BUTTON
+            .borrow_ref_mut(cs)
+            .as_mut()
+            .unwrap()
+            .clear_interrupt();
+    });
 }
