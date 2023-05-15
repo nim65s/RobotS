@@ -7,7 +7,6 @@ use robots_drv::TX;
 
 #[server(SendCmd, "/api", "Cbor")]
 pub async fn send_cmd(cmd: Cmd) -> Result<(), ServerFnError> {
-    println!("hello {cmd:?}...");
     TX.send(&cmd)
         .await
         .map_err(|e| ServerFnError::ServerError(e.to_string()))
