@@ -3,7 +3,6 @@ use leptos_meta::*;
 use leptos_router::*;
 
 use crate::cmd_logger::CmdLogger;
-use crate::cmd_sender::CmdSender;
 
 #[component]
 pub fn App(cx: Scope) -> impl IntoView {
@@ -36,19 +35,8 @@ pub fn App(cx: Scope) -> impl IntoView {
 /// Renders the home page of your application.
 #[component]
 fn HomePage(cx: Scope) -> impl IntoView {
-    // Creates a reactive value to update the button
-    let (count, set_count) = create_signal(cx, 0);
-    let on_click = move |_| set_count.update(|count| *count += 1);
-
-    let button = "text-slate-100 p-2 my-4 rounded-br-lg \
-                  bg-sky-700 hover:bg-sky-600 active:bg-sky-500 \
-                  shadow-lg hover:shadow-xl active:shadow-2xl";
-
     view! { cx,
         <h1 class="text-white text-4xl my-4">"Welcome to Leptos!"</h1>
-        <button class={button} on:click=on_click>"Click Me: " {count}</button>
-        <CmdSender />
-        <br />
         <CmdLogger />
     }
 }

@@ -1,6 +1,5 @@
 pub mod app;
 pub mod cmd_logger;
-pub mod cmd_sender;
 
 use cfg_if::cfg_if;
 
