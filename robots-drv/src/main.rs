@@ -16,14 +16,13 @@ async fn main() -> Result<()> {
         }
     });
 
-    let mut two_hz = interval(Duration::from_millis(500));
+    let mut ten_hz = interval(Duration::from_millis(100));
 
-    for _ in 0..7 {
-        for cmd in [Cmd::Get, Cmd::Ping, Cmd::Pong] {
-            two_hz.tick().await;
-            println!("sending {cmd:?}...");
-            tx.send(&cmd).await?;
-        }
+    for hue in 0..255 {
+        let cmd = Cmd::Hue(hue);
+        ten_hz.tick().await;
+        println!("sending {cmd:?}...");
+        tx.send(&cmd).await?;
     }
 
     Ok(())
