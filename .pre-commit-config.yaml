@@ -1,3 +1,6 @@
+ci:
+  skip:
+  - just-all
 repos:
 - repo: https://github.com/nim65s/pre-commit-sort
   rev: v0.1.0
