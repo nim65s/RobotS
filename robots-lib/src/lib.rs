@@ -55,19 +55,11 @@ impl Cmd {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::aht20::SensorOk;
     extern crate std;
 
     #[test]
     fn cmd_to_vec_to_cmd() {
-        let cmd_in = Cmd::Status(
-            Relay::Open,
-            SensorResult::Ok(SensorOk {
-                h: u32::MAX,
-                t: u32::MAX,
-            }),
-        );
-
+        let cmd_in = Cmd::Hue(42);
         std::dbg!(cmd_in);
         let data = cmd_in.to_vec();
         assert!(data.is_ok(), "data is not ok: {data:?}");
