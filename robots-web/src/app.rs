@@ -5,13 +5,11 @@ use leptos_router::*;
 use crate::cmd_logger::CmdLogger;
 
 #[component]
-pub fn App(cx: Scope) -> impl IntoView {
+pub fn App() -> impl IntoView {
     // Provides context that manages stylesheets, titles, meta tags, etc.
-    provide_meta_context(cx);
+    provide_meta_context();
 
     view! {
-        cx,
-
         // injects a stylesheet into the document <head>
         // id=leptos means cargo-leptos will hot-reload this stylesheet
         <Stylesheet id="leptos" href="/pkg/robots-web.css"/>
@@ -24,7 +22,7 @@ pub fn App(cx: Scope) -> impl IntoView {
             <Router>
                 <main>
                     <Routes>
-                        <Route path="" view=|cx| view! { cx, <HomePage/> }/>
+                        <Route path="" view=|| view! {  <HomePage/> }/>
                     </Routes>
                 </main>
             </Router>
@@ -34,8 +32,8 @@ pub fn App(cx: Scope) -> impl IntoView {
 
 /// Renders the home page of your application.
 #[component]
-fn HomePage(cx: Scope) -> impl IntoView {
-    view! { cx,
+fn HomePage() -> impl IntoView {
+    view! {
         <h1 class="text-white text-4xl my-4">"Welcome to Leptos!"</h1>
         <CmdLogger />
     }

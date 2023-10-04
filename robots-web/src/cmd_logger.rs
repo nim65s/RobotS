@@ -14,11 +14,11 @@ pub async fn send_cmd(cmd: Cmd) -> Result<(), ServerFnError> {
 }
 
 #[component]
-pub fn CmdLogger(cx: Scope) -> impl IntoView {
-    let (cmds, set_cmds) = create_signal::<Vec<(DateTime<Utc>, Cmd)>>(cx, vec![]);
-    let (scmds, set_scmds) = create_signal::<Vec<(DateTime<Utc>, Cmd)>>(cx, vec![]);
+pub fn CmdLogger() -> impl IntoView {
+    let (cmds, set_cmds) = create_signal::<Vec<(DateTime<Utc>, Cmd)>>(vec![]);
+    let (scmds, set_scmds) = create_signal::<Vec<(DateTime<Utc>, Cmd)>>(vec![]);
 
-    let cmd_sender = create_action(cx, move |cmd: &Cmd| {
+    let cmd_sender = create_action(move |cmd: &Cmd| {
         set_scmds.update(|cmds| cmds.push((Utc::now(), *cmd)));
         send_cmd(*cmd)
     });
@@ -30,14 +30,14 @@ pub fn CmdLogger(cx: Scope) -> impl IntoView {
 
         let mut source = EventSource::new("/api/sse").expect("couldn't connect to SSE stream");
         create_signal_from_stream(
-            cx,
+
             source.subscribe("msg").unwrap().map(move |v| match v {
                 Err(e) => format!("sse connection error: {e:?}"),
                 Ok((_, v)) => match Cmd::from_sse(&v) {
                     Err(e) => format!("sse decoding error: {e:?}"),
                     Ok(Some(v)) => {
                         set_cmds.update(|cmds| cmds.push((Utc::now(), v)));
-                        log!("got {v:?}");
+                        logging::log!("got {v:?}");
                         format!("{v:?}")
                     }
                     v => format!("{v:?}"),
@@ -45,7 +45,7 @@ pub fn CmdLogger(cx: Scope) -> impl IntoView {
             }),
         );
 
-        on_cleanup(cx, move || source.close());
+        on_cleanup( move || source.close());
     }
     };
 
@@ -53,7 +53,7 @@ pub fn CmdLogger(cx: Scope) -> impl IntoView {
                   bg-sky-700 hover:bg-sky-600 active:bg-sky-500 \
                   shadow-lg hover:shadow-xl active:shadow-2xl";
 
-    view! { cx,
+    view! {
         <button class={button} on:click=move |_| {cmd_sender.dispatch(Cmd::Ping)}>"Ping"</button>
         <button class={button} on:click=move |_| {cmd_sender.dispatch(Cmd::Pong)}>"Pong"</button>
         <button class={button} on:click=move |_| {cmd_sender.dispatch(Cmd::Hue(0))}>"Red"</button>
@@ -65,21 +65,19 @@ pub fn CmdLogger(cx: Scope) -> impl IntoView {
         <div class="flex text-slate-100">
             <ol class="flex-auto">
                 <li class="underline">"Sent"</li>
-                <For each=cmds key=|cmd| cmd.0 view=move |cx, (dt, cmd)| {
-                    view! {
-                        cx,
-                        <li>{format!("{dt:?} {cmd:?}")}</li>
-                    }
-                }/>
+                <For
+                    each=cmds
+                    key=|cmd| cmd.0
+                    children=|(dt, cmd)| view! { <li>{format!("{dt:?} {cmd:?}")}</li> }
+                />
             </ol>
             <ol class="flex-auto">
                 <li class="underline">"Received"</li>
-                <For each=scmds key=|cmd| cmd.0 view=move |cx, (dt, cmd)| {
-                    view! {
-                        cx,
-                        <li>{format!("{dt:?} {cmd:?}")}</li>
-                    }
-                }/>
+                <For
+                    each=scmds
+                    key=|cmd| cmd.0
+                    children=|(dt, cmd)| view! { <li>{format!("{dt:?} {cmd:?}")}</li> }
+                />
             </ol>
         </div>
     }
