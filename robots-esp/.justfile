@@ -13,4 +13,4 @@ clippy:
     {{clippy}}
 
 esp:
-    cargo espflash --release {{port}}
+    cargo espflash flash --release --port {{port}}
