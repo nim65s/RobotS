@@ -66,7 +66,7 @@ pub fn CmdLogger() -> impl IntoView {
             <ol class="flex-auto">
                 <li class="underline">"Sent"</li>
                 <For
-                    each=cmds
+                    each=move || cmds.get()
                     key=|cmd| cmd.0
                     children=|(dt, cmd)| view! { <li>{format!("{dt:?} {cmd:?}")}</li> }
                 />
@@ -74,7 +74,7 @@ pub fn CmdLogger() -> impl IntoView {
             <ol class="flex-auto">
                 <li class="underline">"Received"</li>
                 <For
-                    each=scmds
+                    each=move || scmds.get()
                     key=|cmd| cmd.0
                     children=|(dt, cmd)| view! { <li>{format!("{dt:?} {cmd:?}")}</li> }
                 />
