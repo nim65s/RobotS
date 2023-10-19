@@ -64,7 +64,7 @@ pub fn CmdLogger() -> impl IntoView {
         <br />
         <div class="flex text-slate-100">
             <ol class="flex-auto">
-                <li class="underline">"Sent"</li>
+                <li class="underline">"Received"</li>
                 <For
                     each=move || cmds.get()
                     key=|cmd| cmd.0
@@ -72,7 +72,7 @@ pub fn CmdLogger() -> impl IntoView {
                 />
             </ol>
             <ol class="flex-auto">
-                <li class="underline">"Received"</li>
+                <li class="underline">"Sent"</li>
                 <For
                     each=move || scmds.get()
                     key=|cmd| cmd.0
