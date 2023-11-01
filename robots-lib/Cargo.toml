@@ -13,7 +13,10 @@ thiserror = { version = "1", package = "thiserror-core", default-features = fals
 serde_json = {version = "1", optional = true }
 web-sys = { version = "0.3.62", optional = true }
 actix-web = { version = "4", optional = true }
+esp32c3-hal = {version = "0.13.0", optional = true }
+esp-hal-smartled = { version = "0.6.0", features = ["esp32c3"] , optional = true}
 
 [features]
 std = ["dep:serde_json", "dep:actix-web"]
 wasm = ["dep:web-sys", "dep:serde_json"]
+esp32c3 = ["dep:esp32c3-hal", "dep:esp-hal-smartled"]

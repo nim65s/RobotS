@@ -16,14 +16,17 @@ use serde::{Deserialize, Serialize};
 #[repr(u8)]
 #[derive(Deserialize, Serialize, MaxSize, Debug, Eq, PartialEq, Copy, Clone)]
 pub enum Cmd {
+    Hello,
     Ping,
     Pong,
     Button,
     Hue(u8),
 }
 
+pub const CMD_MAX_SIZE: usize = Cmd::POSTCARD_MAX_SIZE + 2;
+
 /// Heapless vector which can contain the biggest Cmd plus 2 additionnal bytes for COBS
-pub type Vec = heapless::Vec<u8, { Cmd::POSTCARD_MAX_SIZE + 2 }>;
+pub type Vec = heapless::Vec<u8, { CMD_MAX_SIZE }>;
 
 impl Cmd {
     pub fn to_vec(&self) -> Result<Vec> {
