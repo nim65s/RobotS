@@ -1,4 +1,4 @@
 [workspace]
 members = ["robots-drv", "robots-lib", "robots-web"]
-exclude = ["robots-esp"]
+exclude = ["robots-esp", "robots-stm"]
 resolver = "2"

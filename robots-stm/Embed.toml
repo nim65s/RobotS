@@ -1,0 +1,12 @@
+[default.general]
+chip = "STM32F103C8"
+
+[default.rtt]
+enabled = true
+log_enabled = true
+
+#[default.flashing]
+#enabled = false
+
+#[default.reset]
+#enabled = false

@@ -1,0 +1,34 @@
+[package]
+name = "robots-stm"
+version = "0.1.0"
+authors = ["Guilhem Saurel <guilhem.saurel@laas.fr>"]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+critical-section = "1.1.1"
+embassy-executor = { version = "0.3.1", features = ["nightly", "integrated-timers", "arch-riscv32", "executor-thread"] }
+embassy-sync = "0.1.0"
+embassy-time = { version = "0.1.5", features = ["nightly", "tick-hz-1_000_000"] }
+#robots-lib = { path = "../robots-lib", features = ["esp32c3"] }
+static_cell = { version = "1.2.0", features = ["nightly"] }
+embedded-io-async  = "0.6.0"
+embedded-hal-async = "=1.0.0-rc.1"
+heapless = "0.7"
+embedded-hal = "0.2.7"
+nb = "1"
+cortex-m = "0.7.6"
+cortex-m-rt = "0.7.1"
+# Panic behaviour, see https://crates.io/keywords/panic-impl for alternatives
+panic-halt = "0.2.0"
+stm32f1xx-hal = { version = "0.10.0", features = ["rt", "stm32f103", "medium"] }
+usb-device = "0.2.8"
+usbd-serial = "0.1.1"
+unwrap-infallible = "0.1.5"
+
+[features]
+default = []
+monitor = []
+
+[package.metadata.cargo-machete]
+ignored = ["esp-hal-common"]  # for embassy

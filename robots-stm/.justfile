@@ -1,4 +1,3 @@
-port := "/dev/ttyUSB0"
 check := "cargo check --color always"
 clippy := "cargo clippy --color always"
 test := "cargo test --color always"
@@ -12,5 +11,5 @@ check:
 clippy:
     {{clippy}} {{clippy_args}}
 
-esp:
-    cargo espflash flash --release --port {{port}}
+stm:
+    cargo embed --release
