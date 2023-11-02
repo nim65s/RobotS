@@ -9,10 +9,11 @@
 #![no_std]
 #![no_main]
 
-extern crate panic_halt;
+use panic_rtt_target as _;
 
 use cortex_m::asm::delay;
 use cortex_m_rt::entry;
+use rtt_target::{rprintln, rtt_init_print};
 use stm32f1xx_hal::usb::{Peripheral, UsbBus};
 use stm32f1xx_hal::{pac, prelude::*};
 use usb_device::prelude::*;
@@ -20,6 +21,8 @@ use usbd_serial::{SerialPort, USB_CLASS_CDC};
 
 #[entry]
 fn main() -> ! {
+    rtt_init_print!();
+    rprintln!("start");
     let dp = pac::Peripherals::take().unwrap();
 
     let mut flash = dp.FLASH.constrain();
@@ -60,11 +63,12 @@ fn main() -> ! {
 
     let mut usb_dev = UsbDeviceBuilder::new(&usb_bus, UsbVidPid(0x16c0, 0x27dd))
         .manufacturer("Fake company")
-        .product("Serial port")
+        .product("Serial port + rtt")
         .serial_number("TEST")
         .device_class(USB_CLASS_CDC)
         .build();
 
+    rprintln!("go");
     loop {
         if !usb_dev.poll(&mut [&mut serial]) {
             continue;
