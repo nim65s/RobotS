@@ -26,6 +26,10 @@ need_stdout = false
 command = ["just", "check-front"]
 need_stdout = false
 
+[jobs.check-stm]
+command = ["just", "check-stm"]
+need_stdout = false
+
 [jobs.clippy-drv]
 command = ["just", "clippy-drv"]
 need_stdout = false
@@ -46,15 +50,21 @@ need_stdout = false
 command = ["just", "clippy-front"]
 need_stdout = false
 
+[jobs.clippy-stm]
+command = ["just", "clippy-stm"]
+need_stdout = false
+
 [keybindings]
-t = "job:check-drv"
-s = "job:check-esp"
-r = "job:check-lib"
-n = "job:check-back"
-m = "job:check-front"
 c = "job:test"
-shift-t = "job:clippy-drv"
-shift-s = "job:clippy-esp"
-shift-r = "job:clippy-lib"
-shift-n = "job:clippy-back"
-shift-m = "job:clippy-front"
+q = "job:check-esp"
+g = "job:check-stm"
+t = "job:check-lib"
+s = "job:check-drv"
+v = "job:check-back"
+d = "job:check-front"
+shift-q = "job:clippy-esp"
+shift-g = "job:clippy-stm"
+shift-t = "job:clippy-lib"
+shift-s = "job:clippy-drv"
+shift-v = "job:clippy-back"
+shift-d = "job:clippy-front"

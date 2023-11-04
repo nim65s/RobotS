@@ -81,7 +81,7 @@ fn main() -> ! {
                 led.set_low(); // Turn on
 
                 // Echo back in upper case
-                for c in buf[0..count].iter_mut() {
+                for c in &mut buf[0..count] {
                     if 0x61 <= *c && *c <= 0x7a {
                         *c &= !0x20;
                     }
