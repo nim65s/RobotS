@@ -6,6 +6,7 @@
       rustup
       cargo-espflash
       cargo-leptos
+      probe-rs
       sass
       tailwindcss
       just
