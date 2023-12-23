@@ -16,7 +16,7 @@ use esp32c3_hal::{
     interrupt,
     peripherals::{Interrupt, Peripherals, UART0, UART1},
     prelude::*,
-    rmt::{Channel0, Rmt},
+    rmt::{Channel, Rmt},
     uart::{
         config::{AtCmdConfig, Config},
         TxRxPins, UartRx, UartTx,
@@ -24,7 +24,7 @@ use esp32c3_hal::{
     Uart, IO,
 };
 use esp_backtrace as _;
-use esp_hal_smartled::{smartLedAdapter, SmartLedsAdapter};
+use esp_hal_smartled::{smartLedBuffer, SmartLedsAdapter};
 use heapless::String;
 use robots_lib::{Cmd, Error, Vec, CMD_MAX_SIZE};
 use smart_leds::{
@@ -40,7 +40,7 @@ type MonSignal = Signal<NoopRawMutex, String<100>>;
 type TX0 = UartTx<'static, UART0>;
 type RX0 = UartRx<'static, UART0>;
 type TX1 = UartTx<'static, UART1>;
-type Led = SmartLedsAdapter<Channel0<0>, 0, 25>;
+type Led = SmartLedsAdapter<Channel<0>, 0, 25>;
 type Btn = GpioPin<Input<PullUp>, 9>;
 
 fn monitor_err(mon_sig: &'static MonSignal, e: impl Into<Error>) {
@@ -57,7 +57,7 @@ async fn tx_task(mut tx: TX0, cmd_sig: &'static CmdSignal, mon_sig: &'static Mon
         tx.write_all(cmd.to_vec().unwrap().as_slice())
             .await
             .unwrap_or_else(|e| monitor_err(mon_sig, e));
-        mon_sig.signal(String::from("tx end"));
+        mon_sig.signal(String::try_from("tx end").unwrap());
     }
 }
 
@@ -83,7 +83,7 @@ async fn rx_task(
                 };
             }
         }
-        mon_sig.signal(String::from("rx end"));
+        mon_sig.signal(String::try_from("rx end").unwrap());
     }
 }
 
@@ -99,7 +99,7 @@ async fn led_task(mut led: Led, hue_sig: &'static HueSignal, mon_sig: &'static M
         let data = [hsv2rgb(color)];
         led.write(brightness(gamma(data.iter().cloned()), 10))
             .unwrap_or_else(|e| monitor_err(mon_sig, e));
-        mon_sig.signal(String::from("led end"));
+        mon_sig.signal(String::try_from("led end").unwrap());
     }
 }
 
@@ -108,13 +108,13 @@ async fn btn_task(mut btn: Btn, cmd_sig: &'static CmdSignal, mon_sig: &'static M
     loop {
         btn.wait_for_falling_edge().await.unwrap();
         cmd_sig.signal(Cmd::Button);
-        mon_sig.signal(String::from("btn end"));
+        mon_sig.signal(String::try_from("btn end").unwrap());
     }
 }
 
 #[embassy_executor::task]
 async fn monitor_task(mut tx: TX1, mon_sig: &'static MonSignal) {
-    let txt = String::<20>::from("\r\n\nstart monitor\r\n");
+    let txt = String::<20>::try_from("\r\n\nstart monitor\r\n").unwrap();
     tx.write_all(txt.into_bytes().as_slice()).await.unwrap();
     loop {
         let txt = mon_sig.wait().await;
@@ -128,7 +128,7 @@ async fn ping_task(cmd_sig: &'static CmdSignal, mon_sig: &'static MonSignal) {
     loop {
         Timer::after(Duration::from_millis(3_000)).await;
         cmd_sig.signal(Cmd::Ping);
-        mon_sig.signal(String::from("ping end"));
+        mon_sig.signal(String::try_from("ping end").unwrap());
     }
 }
 
@@ -140,7 +140,8 @@ async fn main(spawner: Spawner) {
 
     let io = IO::new(peripherals.GPIO, peripherals.IO_MUX);
     let rmt = Rmt::new(peripherals.RMT, 80u32.MHz(), &clocks).unwrap();
-    let led = <smartLedAdapter!(0, 1)>::new(rmt.channel0, io.pins.gpio8);
+    let rmt_buffer = smartLedBuffer!(1);
+    let led = SmartLedsAdapter::new(rmt.channel0, io.pins.gpio8, rmt_buffer);
 
     let btn = io.pins.gpio9.into_pull_up_input();
 
