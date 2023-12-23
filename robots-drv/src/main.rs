@@ -4,7 +4,8 @@ use robots_drv::{driver, Cmd, Result, RX, TX};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let uart_port = serialport::new("/dev/ttyUSB0", 115_200);
+    let port = option_env!("ROBOTS_PORT").unwrap_or("/dev/ttyUSB0");
+    let uart_port = serialport::new(port, 115_200);
 
     driver(uart_port)?;
     let tx = TX.clone();

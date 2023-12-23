@@ -1,3 +1,5 @@
+set fallback
+
 check := "cargo check --color always"
 clippy := "cargo clippy --color always"
 test := "cargo test --color always"

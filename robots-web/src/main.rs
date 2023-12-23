@@ -23,7 +23,8 @@ cfg_if::cfg_if! {
             println!("main start");
 
             // setup uart
-            let uart_port = serialport::new("/dev/ttyUSB0", 115_200);
+            let port = option_env!("ROBOTS_PORT").unwrap_or("/dev/ttyUSB0");
+            let uart_port = serialport::new(port, 115_200);
             driver(uart_port).expect("uart driver error");
 
             // setup http

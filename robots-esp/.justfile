@@ -1,4 +1,6 @@
-port := "/dev/ttyUSB0"
+set fallback
+
+port := env("ROBOTS_PORT", "/dev/ttyUSB0")
 check := "cargo check --color always"
 clippy := "cargo clippy --color always"
 test := "cargo test --color always"

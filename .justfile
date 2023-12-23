@@ -1,4 +1,4 @@
-port := "/dev/ttyUSB1"
+monport := env("ROBOTS_MON", "/dev/ttyUSB1")
 check := "cargo check --color always"
 clippy := "cargo clippy --color always"
 test := "cargo test --color always"
@@ -53,7 +53,7 @@ stm:
     just robots-stm/stm
 
 mon:
-    python -m serial.tools.miniterm {{port}} 115200
+    python -m serial.tools.miniterm {{monport}} 115200
 
 esp-mon:
     just esp
