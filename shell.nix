@@ -1,9 +1,10 @@
 { pkgs ? import <nixpkgs> {} }:
   pkgs.mkShell rec {
     buildInputs = with pkgs; [
-      clang_16
-      llvmPackages_16.bintools
+      clang_17
+      llvmPackages_17.bintools
       rustup
+      cargo-binutils
       cargo-espflash
       cargo-leptos
       probe-rs
@@ -31,7 +32,7 @@
     ])
     # Includes with special directory paths
     ++ [
-      ''-I"${pkgs.llvmPackages_latest.libclang.lib}/lib/clang/${pkgs.llvmPackages_latest.libclang.version}/include"''
+      ''-I"${pkgs.llvmPackages_17.libclang.lib}/lib/clang/${pkgs.llvmPackages_17.libclang.version}/include"''
       ''-I"${pkgs.glib.dev}/include/glib-2.0"''
       ''-I${pkgs.glib.out}/lib/glib-2.0/include/''
     ];
