@@ -53,7 +53,7 @@ stm:
     just robots-stm/stm
 
 mon:
-    python -m serial.tools.miniterm {{port}}
+    python -m serial.tools.miniterm {{port}} 115200
 
 esp-mon:
     just esp
