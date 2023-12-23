@@ -1,8 +1,8 @@
 { pkgs ? import <nixpkgs> {} }:
   pkgs.mkShell rec {
     buildInputs = with pkgs; [
-      clang_17
-      llvmPackages_17.bintools
+      clang_16
+      llvmPackages_16.bintools
       rustup
       cargo-binutils
       cargo-espflash
@@ -11,6 +11,7 @@
       sass
       tailwindcss
       just
+      (python311.withPackages(ps: with ps; [pyserial]))
     ];
     RUSTC_VERSION = pkgs.lib.readFile ./rust-toolchain;
     # https://github.com/rust-lang/rust-bindgen#environment-variables
@@ -32,7 +33,7 @@
     ])
     # Includes with special directory paths
     ++ [
-      ''-I"${pkgs.llvmPackages_17.libclang.lib}/lib/clang/${pkgs.llvmPackages_17.libclang.version}/include"''
+      ''-I"${pkgs.llvmPackages_16.libclang.lib}/lib/clang/${pkgs.llvmPackages_16.libclang.version}/include"''
       ''-I"${pkgs.glib.dev}/include/glib-2.0"''
       ''-I${pkgs.glib.out}/lib/glib-2.0/include/''
     ];
