@@ -12,4 +12,4 @@ clippy:
     {{clippy}} {{clippy_args}}
 
 stm:
-    cargo embed --release
+    cargo run --release
