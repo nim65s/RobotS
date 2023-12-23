@@ -1,7 +1,7 @@
+//! https://github.com/embassy-rs/embassy/blob/main/examples/stm32f1/src/bin/usb_serial.rs
+
 #![no_std]
 #![no_main]
-
-// https://github.com/embassy-rs/embassy/blob/main/examples/stm32f1/src/bin/usb_serial.rs
 
 use defmt::{panic, *};
 use embassy_executor::Spawner;

@@ -15,6 +15,7 @@ pub async fn send_cmd(cmd: Cmd) -> Result<(), ServerFnError> {
 
 #[component]
 pub fn CmdLogger() -> impl IntoView {
+    #[allow(unused_variables)]
     let (cmds, set_cmds) = create_signal::<Vec<(DateTime<Utc>, Cmd)>>(vec![]);
     let (scmds, set_scmds) = create_signal::<Vec<(DateTime<Utc>, Cmd)>>(vec![]);
 

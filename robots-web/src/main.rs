@@ -8,7 +8,7 @@ cfg_if::cfg_if! {
 
         use robots_drv::{RX, driver};
 
-        use robots_web::cmd_logger::SendCmd;
+        //use robots_web::cmd_logger::SendCmd;
         use robots_web::app::*;
 
         #[get("/api/sse")]

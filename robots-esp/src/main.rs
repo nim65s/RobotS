@@ -1,4 +1,4 @@
-//! based on embassy serial example
+//! https://github.com/esp-rs/esp-hal/blob/main/esp32c3-hal/examples/embassy_serial.rs
 
 #![no_std]
 #![no_main]
