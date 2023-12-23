@@ -1,105 +1,114 @@
-//! CDC-ACM serial port example using polling in a busy loop.
-//! Target board: Blue Pill
-//!
-//! Note:
-//! When building this since this is a larger program,
-//! one would need to build it using release profile
-//! since debug profiles generates artifacts that
-//! cause FLASH overflow errors due to their size
 #![no_std]
 #![no_main]
 
-use panic_rtt_target as _;
+// https://github.com/embassy-rs/embassy/blob/main/examples/stm32f1/src/bin/usb_serial.rs
 
-use cortex_m::asm::delay;
-use cortex_m_rt::entry;
-use rtt_target::{rprintln, rtt_init_print};
-use stm32f1xx_hal::usb::{Peripheral, UsbBus};
-use stm32f1xx_hal::{pac, prelude::*};
-use usb_device::prelude::*;
-use usbd_serial::{SerialPort, USB_CLASS_CDC};
+use defmt::{panic, *};
+use embassy_executor::Spawner;
+use embassy_futures::join::join;
+use embassy_stm32::gpio::{Level, Output, Speed};
+use embassy_stm32::time::Hertz;
+use embassy_stm32::usb::{Driver, Instance};
+use embassy_stm32::{bind_interrupts, peripherals, usb, Config};
+use embassy_time::Timer;
+use embassy_usb::class::cdc_acm::{CdcAcmClass, State};
+use embassy_usb::driver::EndpointError;
+use embassy_usb::Builder;
+use {defmt_rtt as _, panic_probe as _};
 
-#[entry]
-fn main() -> ! {
-    rtt_init_print!();
-    rprintln!("start");
-    let dp = pac::Peripherals::take().unwrap();
+bind_interrupts!(struct Irqs {
+    USB_LP_CAN1_RX0 => usb::InterruptHandler<peripherals::USB>;
+});
 
-    let mut flash = dp.FLASH.constrain();
-    let rcc = dp.RCC.constrain();
+#[embassy_executor::main]
+async fn main(_spawner: Spawner) {
+    let mut config = Config::default();
+    config.rcc.hse = Some(Hertz(8_000_000));
+    config.rcc.sys_ck = Some(Hertz(48_000_000));
+    config.rcc.pclk1 = Some(Hertz(24_000_000));
+    let mut p = embassy_stm32::init(config);
 
-    let clocks = rcc
-        .cfgr
-        .use_hse(8.MHz())
-        .sysclk(48.MHz())
-        .pclk1(24.MHz())
-        .freeze(&mut flash.acr);
+    info!("Hello World!");
 
-    assert!(clocks.usbclk_valid());
+    {
+        // BluePill board has a pull-up resistor on the D+ line.
+        // Pull the D+ pin down to send a RESET condition to the USB bus.
+        // This forced reset is needed only for development, without it host
+        // will not reset your device when you upload new firmware.
+        let _dp = Output::new(&mut p.PA12, Level::Low, Speed::Low);
+        Timer::after_millis(10).await;
+    }
 
-    // Configure the on-board LED (PC13, green)
-    let mut gpioc = dp.GPIOC.split();
-    let mut led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
-    led.set_high(); // Turn off
+    // Create the driver, from the HAL.
+    let driver = Driver::new(p.USB, Irqs, p.PA12, p.PA11);
 
-    let mut gpioa = dp.GPIOA.split();
+    // Create embassy-usb Config
+    let config = embassy_usb::Config::new(0xc0de, 0xcafe);
+    //config.max_packet_size_0 = 64;
 
-    // BluePill board has a pull-up resistor on the D+ line.
-    // Pull the D+ pin down to send a RESET condition to the USB bus.
-    // This forced reset is needed only for development, without it host
-    // will not reset your device when you upload new firmware.
-    let mut usb_dp = gpioa.pa12.into_push_pull_output(&mut gpioa.crh);
-    usb_dp.set_low();
-    delay(clocks.sysclk().raw() / 100);
+    // Create embassy-usb DeviceBuilder using the driver and config.
+    // It needs some buffers for building the descriptors.
+    let mut device_descriptor = [0; 256];
+    let mut config_descriptor = [0; 256];
+    let mut bos_descriptor = [0; 256];
+    let mut control_buf = [0; 7];
 
-    let usb = Peripheral {
-        usb: dp.USB,
-        pin_dm: gpioa.pa11,
-        pin_dp: usb_dp.into_floating_input(&mut gpioa.crh),
+    let mut state = State::new();
+
+    let mut builder = Builder::new(
+        driver,
+        config,
+        &mut device_descriptor,
+        &mut config_descriptor,
+        &mut bos_descriptor,
+        &mut [], // no msos descriptors
+        &mut control_buf,
+    );
+
+    // Create classes on the builder.
+    let mut class = CdcAcmClass::new(&mut builder, &mut state, 64);
+
+    // Build the builder.
+    let mut usb = builder.build();
+
+    // Run the USB device.
+    let usb_fut = usb.run();
+
+    // Do stuff with the class!
+    let echo_fut = async {
+        loop {
+            class.wait_connection().await;
+            info!("Connected");
+            let _ = echo(&mut class).await;
+            info!("Disconnected");
+        }
     };
-    let usb_bus = UsbBus::new(usb);
 
-    let mut serial = SerialPort::new(&usb_bus);
+    // Run everything concurrently.
+    // If we had made everything `'static` above instead, we could do this using separate tasks instead.
+    join(usb_fut, echo_fut).await;
+}
 
-    let mut usb_dev = UsbDeviceBuilder::new(&usb_bus, UsbVidPid(0x16c0, 0x27dd))
-        .manufacturer("Fake company")
-        .product("Serial port + rtt")
-        .serial_number("TEST")
-        .device_class(USB_CLASS_CDC)
-        .build();
+struct Disconnected {}
 
-    rprintln!("go");
+impl From<EndpointError> for Disconnected {
+    fn from(val: EndpointError) -> Self {
+        match val {
+            EndpointError::BufferOverflow => panic!("Buffer overflow"),
+            EndpointError::Disabled => Disconnected {},
+        }
+    }
+}
+
+async fn echo<'d, T: Instance + 'd>(
+    class: &mut CdcAcmClass<'d, Driver<'d, T>>,
+) -> Result<(), Disconnected> {
+    let mut buf = [0; 64];
     loop {
-        if !usb_dev.poll(&mut [&mut serial]) {
-            continue;
-        }
-
-        let mut buf = [0u8; 64];
-
-        match serial.read(&mut buf) {
-            Ok(count) if count > 0 => {
-                led.set_low(); // Turn on
-
-                // Echo back in upper case
-                for c in &mut buf[0..count] {
-                    if 0x61 <= *c && *c <= 0x7a {
-                        *c &= !0x20;
-                    }
-                }
-
-                let mut write_offset = 0;
-                while write_offset < count {
-                    match serial.write(&buf[write_offset..count]) {
-                        Ok(len) if len > 0 => {
-                            write_offset += len;
-                        }
-                        _ => {}
-                    }
-                }
-            }
-            _ => {}
-        }
-
-        led.set_high(); // Turn off
+        let n = class.read_packet(&mut buf).await?;
+        let data = &buf[..n];
+        info!("data: {:x}", data);
+        class.write_packet(b"\necho ").await?;
+        class.write_packet(data).await?;
     }
 }
