@@ -7,6 +7,7 @@
       cargo-binutils
       cargo-espflash
       cargo-leptos
+      cargo-sort
       probe-rs
       sass
       tailwindcss
