@@ -1,9 +1,9 @@
-//! https://github.com/embassy-rs/embassy/blob/main/examples/stm32f1/src/bin/usb_serial.rs
+//! <https://github.com/embassy-rs/embassy/blob/main/examples/stm32f1/src/bin/usb_serial.rs>
 
 #![no_std]
 #![no_main]
 
-use defmt::{panic, *};
+use defmt::{info, panic};
 use embassy_executor::Spawner;
 use embassy_futures::join::join;
 use embassy_stm32::gpio::{Level, Output, Speed};
@@ -95,7 +95,7 @@ impl From<EndpointError> for Disconnected {
     fn from(val: EndpointError) -> Self {
         match val {
             EndpointError::BufferOverflow => panic!("Buffer overflow"),
-            EndpointError::Disabled => Disconnected {},
+            EndpointError::Disabled => Self {},
         }
     }
 }
