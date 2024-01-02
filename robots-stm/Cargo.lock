@@ -642,7 +642,6 @@ dependencies = [
  "embassy-sync",
  "embassy-time",
  "embassy-usb",
- "embassy-usb-driver",
  "embedded-hal 0.2.7",
  "futures",
  "heapless",
