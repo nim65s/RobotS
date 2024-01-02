@@ -2562,6 +2562,7 @@ dependencies = [
  "esp-hal-smartled",
  "esp32c3-hal",
  "heapless 0.7.17",
+ "leptos",
  "postcard",
  "serde",
  "serde_json",

@@ -1,10 +1,17 @@
+#![allow(clippy::unsafe_derive_deserialize)]
 use chrono::prelude::*;
+#[allow(clippy::wildcard_imports)]
 use leptos::*;
 
 use robots_lib::Cmd;
 
 #[cfg(feature = "ssr")]
 use robots_drv::TX;
+
+#[cfg(not(feature = "ssr"))]
+use futures::StreamExt;
+#[cfg(not(feature = "ssr"))]
+use gloo_net::eventsource::futures::EventSource;
 
 #[server(SendCmd, "/api", "Cbor")]
 pub async fn send_cmd(cmd: Cmd) -> Result<(), ServerFnError> {
@@ -14,41 +21,48 @@ pub async fn send_cmd(cmd: Cmd) -> Result<(), ServerFnError> {
 }
 
 #[component]
+#[must_use]
+#[allow(clippy::module_name_repetitions)]
 pub fn CmdLogger() -> impl IntoView {
     #[allow(unused_variables)]
-    let (cmds, set_cmds) = create_signal::<Vec<(DateTime<Utc>, Cmd)>>(vec![]);
-    let (scmds, set_scmds) = create_signal::<Vec<(DateTime<Utc>, Cmd)>>(vec![]);
+    let (recv_cmds, set_recv_cmds) = create_signal::<Vec<(DateTime<Utc>, Cmd)>>(vec![]);
+    let (sent_cmds, set_sent_cmds) = create_signal::<Vec<(DateTime<Utc>, Cmd)>>(vec![]);
 
     let cmd_sender = create_action(move |cmd: &Cmd| {
-        set_scmds.update(|cmds| cmds.push((Utc::now(), *cmd)));
+        set_sent_cmds.update(|cmds| cmds.push((Utc::now(), *cmd)));
         send_cmd(*cmd)
     });
 
     cfg_if::cfg_if! {
     if #[cfg(not(feature = "ssr"))] {
-        use futures::StreamExt;
-        use gloo_net::eventsource::futures::EventSource;
 
-        let mut source = EventSource::new("/api/sse").expect("couldn't connect to SSE stream");
-        create_signal_from_stream(
-
-            source.subscribe("msg").unwrap().map(move |v| match v {
-                Err(e) => format!("sse connection error: {e:?}"),
-                Ok((_, v)) => match Cmd::from_sse(&v) {
-                    Err(e) => format!("sse decoding error: {e:?}"),
-                    Ok(Some(v)) => {
-                        set_cmds.update(|cmds| cmds.push((Utc::now(), v)));
-                        logging::log!("got {v:?}");
-                        format!("{v:?}")
+        match EventSource::new("/api/sse") {
+            Err(e) => eprintln!("couldn't connect to SSE stream: {e:?}"),
+            Ok(mut source) => {
+                match source.subscribe("msg") {
+                    Err(e) => eprintln!("couldn't subscribe to 'msg' SSE stream: {e:?}"),
+                    Ok(src) => {
+                        create_signal_from_stream(
+                            src.map(move |v| match v {
+                                Err(e) => format!("sse connection error: {e:?}"),
+                                Ok((_, v)) => match Cmd::from_sse(&v) {
+                                    Err(e) => format!("sse decoding error: {e:?}"),
+                                    Ok(Some(v)) => {
+                                        set_recv_cmds.update(|cmds| cmds.push((Utc::now(), v)));
+                                        logging::log!("got {v:?}");
+                                        format!("{v:?}")
+                                    }
+                                    v => format!("{v:?}"),
+                                },
+                            }),
+                        );
                     }
-                    v => format!("{v:?}"),
-                },
-            }),
-        );
+                }
 
-        on_cleanup( move || source.close());
-    }
-    };
+                on_cleanup( move || source.close());
+            }
+        }
+    }};
 
     let button = "text-slate-100 p-2 m-4 rounded-br-lg \
                   bg-sky-700 hover:bg-sky-600 active:bg-sky-500 \
@@ -67,7 +81,7 @@ pub fn CmdLogger() -> impl IntoView {
             <ol class="flex-auto">
                 <li class="underline">"Received"</li>
                 <For
-                    each=move || cmds.get()
+                    each=move || recv_cmds.get()
                     key=|cmd| cmd.0
                     children=|(dt, cmd)| view! { <li>{format!("{dt:?} {cmd:?}")}</li> }
                 />
@@ -75,7 +89,7 @@ pub fn CmdLogger() -> impl IntoView {
             <ol class="flex-auto">
                 <li class="underline">"Sent"</li>
                 <For
-                    each=move || scmds.get()
+                    each=move || sent_cmds.get()
                     key=|cmd| cmd.0
                     children=|(dt, cmd)| view! { <li>{format!("{dt:?} {cmd:?}")}</li> }
                 />

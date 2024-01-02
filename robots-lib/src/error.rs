@@ -7,6 +7,17 @@ pub enum Error {
     #[error("postcard error {0}")]
     Postcard(postcard::Error),
 
+    #[error("uart driver error")]
+    UartDriver,
+
+    #[cfg(feature = "std")]
+    #[error("Io error: {0}")]
+    Io(#[from] std::io::Error),
+
+    #[cfg(feature = "std")]
+    #[error("Io error: {0}")]
+    LeptosConfig(#[from] leptos::leptos_config::errors::LeptosConfigError),
+
     #[cfg(any(feature = "std", feature = "wasm"))]
     #[error("Serde Json error: {0}")]
     SerdeJson(#[from] serde_json::Error),

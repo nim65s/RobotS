@@ -1,15 +1,18 @@
 cfg_if::cfg_if! {
     if #[cfg(feature = "ssr")] {
         use actix_files::Files;
+        #[allow(clippy::wildcard_imports)]
         use actix_web::*;
+        #[allow(clippy::wildcard_imports)]
         use leptos::*;
         use leptos_actix::{generate_route_list, LeptosRoutes};
         use futures::StreamExt;
+        use robots_lib::{Error, Result};
 
         use robots_drv::{RX, driver};
 
         //use robots_web::cmd_logger::SendCmd;
-        use robots_web::app::*;
+        use robots_web::app::App;
 
         #[get("/api/sse")]
         async fn uart_rx_to_sse() -> impl Responder {
@@ -25,10 +28,13 @@ cfg_if::cfg_if! {
             // setup uart
             let port = option_env!("ROBOTS_PORT").unwrap_or("/dev/ttyUSB0");
             let uart_port = serialport::new(port, 115_200);
-            driver(uart_port).expect("uart driver error");
+            if let Err(e) = driver(uart_port) {
+                eprintln!("uart driver error: {e:?}");
+                return Err(Error::UartDriver)
+            }
 
             // setup http
-            let conf = get_configuration(None).await.unwrap();
+            let conf = get_configuration(None).await?;
             let addr = conf.leptos_options.site_addr;
 
             // Generate the list of routes in your Leptos App
@@ -43,7 +49,7 @@ cfg_if::cfg_if! {
                     .route("/api/{tail:.*}", leptos_actix::handle_server_fns())
                     .leptos_routes(
                         leptos_options.to_owned(),
-                        routes.to_owned(),
+                        routes.clone(),
                         || view! {  <App/> },
                         )
                     .service(Files::new("/", site_root))

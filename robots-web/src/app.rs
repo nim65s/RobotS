@@ -1,10 +1,15 @@
+#[allow(clippy::wildcard_imports)]
 use leptos::*;
+#[allow(clippy::wildcard_imports)]
 use leptos_meta::*;
+#[allow(clippy::wildcard_imports)]
 use leptos_router::*;
 
 use crate::cmd_logger::CmdLogger;
 
 #[component]
+#[must_use]
+#[allow(clippy::module_name_repetitions)]
 pub fn App() -> impl IntoView {
     // Provides context that manages stylesheets, titles, meta tags, etc.
     provide_meta_context();
