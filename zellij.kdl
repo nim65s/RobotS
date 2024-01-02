@@ -1,0 +1,26 @@
+layout {
+    pane split_direction="vertical" {
+        pane command="bacon" {
+            args "--" "clippy"
+            cwd "robots-esp"
+        }
+        pane command="bacon" {
+            args "--" "clippy-back"
+        }
+        pane command="bacon" {
+            args "--" "clippy-lib"
+        }
+    }
+    pane split_direction="vertical" {
+        pane command="bacon" {
+            args "--" "clippy"
+            cwd "robots-stm"
+        }
+        pane command="bacon" {
+            args "--" "clippy-front"
+        }
+        pane command="bacon" {
+            args "--" "test"
+        }
+    }
+}
