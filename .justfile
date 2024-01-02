@@ -67,4 +67,4 @@ web:
     cargo leptos watch
 
 
-all: clippy-lib clippy-esp clippy-stm clippy-drv test
+all: clippy-lib clippy-esp clippy-stm clippy-drv clippy-back clippy-front test
