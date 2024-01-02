@@ -2,3 +2,9 @@
 members = ["robots-drv", "robots-lib", "robots-web"]
 exclude = ["robots-esp", "robots-stm"]
 resolver = "2"
+
+[profile.wasm-release]
+inherits = "release"
+opt-level = 'z'
+lto = true
+codegen-units = 1

@@ -55,9 +55,3 @@ lib-features = ["hydrate"]
 lib-default-features = false
 tailwind-input-file = "style/tailwind.css"
 lib-profile-release = "wasm-release"
-
-[profile.wasm-release]
-inherits = "release"
-opt-level = 'z'
-lto = true
-codegen-units = 1
