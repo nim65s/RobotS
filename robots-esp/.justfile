@@ -1,4 +1,4 @@
-set fallback
+set fallback := true
 
 port := env("ROBOTS_PORT", "/dev/ttyUSB0")
 check := "cargo check --color always"
@@ -9,12 +9,12 @@ clippy_a := "-A clippy::missing-errors-doc -A clippy::missing-panics-doc"
 clippy_args := "-- " + clippy_w + " " + clippy_a
 
 check:
-    {{check}}
+    {{ check }}
 
 clippy:
-    {{clippy}} {{clippy_args}}
+    {{ clippy }} {{ clippy_args }}
 
 esp:
-    cargo espflash flash --release --port {{port}}
+    cargo espflash flash --release --port {{ port }}
 
 all: check clippy
