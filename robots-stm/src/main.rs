@@ -2,6 +2,8 @@
 
 #![no_std]
 #![no_main]
+#![allow(clippy::no_effect_underscore_binding)]
+#![allow(clippy::used_underscore_binding)]
 
 use defmt::{info, panic};
 use embassy_executor::Spawner;
