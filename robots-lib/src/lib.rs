@@ -13,6 +13,9 @@ pub use crate::error::{Error, Result};
 use postcard::experimental::max_size::MaxSize;
 use serde::{Deserialize, Serialize};
 
+type Temperature = u32;
+type Humidity = u32;
+
 #[repr(u8)]
 #[derive(Deserialize, Serialize, MaxSize, Debug, Eq, PartialEq, Copy, Clone)]
 pub enum Cmd {
@@ -21,6 +24,9 @@ pub enum Cmd {
     Pong,
     Button,
     Hue(u8),
+    Led(bool),
+    Relay(bool),
+    Weather(Temperature, Humidity),
 }
 
 pub const CMD_MAX_SIZE: usize = Cmd::POSTCARD_MAX_SIZE + 2;
