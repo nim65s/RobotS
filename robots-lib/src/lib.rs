@@ -18,6 +18,7 @@ type Humidity = u32;
 
 #[repr(u8)]
 #[derive(Deserialize, Serialize, MaxSize, Debug, Eq, PartialEq, Copy, Clone)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum Cmd {
     Hello,
     Ping,

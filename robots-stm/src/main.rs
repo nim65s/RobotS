@@ -2,35 +2,43 @@
 
 #![no_std]
 #![no_main]
+#![feature(type_alias_impl_trait)]
 #![allow(clippy::no_effect_underscore_binding)]
 #![allow(clippy::used_underscore_binding)]
 
-use defmt::{info, panic};
+use defmt::{error, info, panic, Format};
 use embassy_executor::Spawner;
 use embassy_futures::join::join;
+use embassy_futures::select::{select, Either};
 use embassy_stm32::gpio::{Level, Output, Speed};
 use embassy_stm32::time::Hertz;
-use embassy_stm32::usb::{Driver, Instance};
-use embassy_stm32::{bind_interrupts, peripherals, usb, Config};
+use embassy_stm32::usb::Driver;
+use embassy_stm32::{bind_interrupts, peripherals::USB, usb, Config};
+use embassy_sync::{blocking_mutex::raw::NoopRawMutex, signal::Signal};
 use embassy_time::Timer;
 use embassy_usb::class::cdc_acm::{CdcAcmClass, State};
 use embassy_usb::driver::EndpointError;
 use embassy_usb::Builder;
+use robots_lib::{Cmd, Vec, CMD_MAX_SIZE};
+use static_cell::make_static;
 use {defmt_rtt as _, panic_probe as _};
 
 bind_interrupts!(struct Irqs {
-    USB_LP_CAN1_RX0 => usb::InterruptHandler<peripherals::USB>;
+    USB_LP_CAN1_RX0 => usb::InterruptHandler<USB>;
 });
 
+type CmdSignal = Signal<NoopRawMutex, Cmd>;
+type UsbDriver = Driver<'static, USB>;
+
 #[embassy_executor::main]
-async fn main(_spawner: Spawner) {
+async fn main(spawner: Spawner) {
+    info!("Start");
+
     let mut config = Config::default();
     config.rcc.hse = Some(Hertz(8_000_000));
     config.rcc.sys_ck = Some(Hertz(48_000_000));
     config.rcc.pclk1 = Some(Hertz(24_000_000));
     let mut p = embassy_stm32::init(config);
-
-    info!("Hello World!");
 
     {
         // BluePill board has a pull-up resistor on the D+ line.
@@ -41,22 +49,34 @@ async fn main(_spawner: Spawner) {
         Timer::after_millis(10).await;
     }
 
-    // Create the driver, from the HAL.
-    let driver = Driver::new(p.USB, Irqs, p.PA12, p.PA11);
+    let usb_driver = Driver::new(p.USB, Irqs, p.PA12, p.PA11);
+    let cmd_sig = make_static!(Signal::new());
 
-    // Create embassy-usb Config
+    info!("Go !");
+    if let Err(e) = spawner.spawn(usb_task(usb_driver, cmd_sig)) {
+        error!("usb_task error: {:?}", e);
+    }
+    if let Err(e) = spawner.spawn(ping_task(cmd_sig)) {
+        error!("ping_task error: {:?}", e);
+    }
+}
+
+#[embassy_executor::task]
+async fn ping_task(cmd_sig: &'static CmdSignal) {
+    loop {
+        Timer::after_millis(3_000).await;
+        cmd_sig.signal(Cmd::Ping);
+    }
+}
+
+#[embassy_executor::task]
+async fn usb_task(driver: UsbDriver, cmd_sig: &'static CmdSignal) {
     let config = embassy_usb::Config::new(0xc0de, 0xcafe);
-    //config.max_packet_size_0 = 64;
-
-    // Create embassy-usb DeviceBuilder using the driver and config.
-    // It needs some buffers for building the descriptors.
     let mut device_descriptor = [0; 256];
     let mut config_descriptor = [0; 256];
     let mut bos_descriptor = [0; 256];
     let mut control_buf = [0; 7];
-
     let mut state = State::new();
-
     let mut builder = Builder::new(
         driver,
         config,
@@ -67,30 +87,52 @@ async fn main(_spawner: Spawner) {
         &mut control_buf,
     );
 
-    // Create classes on the builder.
     let mut class = CdcAcmClass::new(&mut builder, &mut state, 64);
-
-    // Build the builder.
     let mut usb = builder.build();
-
-    // Run the USB device.
     let usb_fut = usb.run();
 
     // Do stuff with the class!
-    let echo_fut = async {
+    let cdc_fut = async {
+        let mut buf = [0; CMD_MAX_SIZE + 2];
         loop {
             class.wait_connection().await;
             info!("Connected");
-            let _ = echo(&mut class).await;
+            loop {
+                match select(class.read_packet(&mut buf), cmd_sig.wait()).await {
+                    Either::First(Err(e)) => {
+                        error!("usb read {:?}", e);
+                        break;
+                    }
+                    Either::First(Ok(len)) => match Vec::from_slice(&buf[..len]) {
+                        Err(()) => error!("Vec::from_slice {:?} {}", buf, len),
+                        Ok(mut v) => match Cmd::from_vec(&mut v) {
+                            Err(e) => error!("Cmd::from_vec {:?}", e),
+                            Ok(Cmd::Ping) => cmd_sig.signal(Cmd::Pong),
+                            Ok(cmd) => info!("Received {:?}", cmd),
+                        },
+                    },
+                    Either::Second(cmd) => match cmd.to_vec() {
+                        Err(e) => error!("cmd.to_vec {:?}", e),
+                        Ok(data) => {
+                            info!("Sending {:?}", cmd);
+                            class
+                                .write_packet(&data)
+                                .await
+                                .unwrap_or_else(|e| error!("usb write {:?}", e));
+                        }
+                    },
+                }
+            }
             info!("Disconnected");
         }
     };
 
     // Run everything concurrently.
     // If we had made everything `'static` above instead, we could do this using separate tasks instead.
-    join(usb_fut, echo_fut).await;
+    join(usb_fut, cdc_fut).await;
 }
 
+#[derive(Format)]
 struct Disconnected {}
 
 impl From<EndpointError> for Disconnected {
@@ -99,18 +141,5 @@ impl From<EndpointError> for Disconnected {
             EndpointError::BufferOverflow => panic!("Buffer overflow"),
             EndpointError::Disabled => Self {},
         }
-    }
-}
-
-async fn echo<'d, T: Instance + 'd>(
-    class: &mut CdcAcmClass<'d, Driver<'d, T>>,
-) -> Result<(), Disconnected> {
-    let mut buf = [0; 64];
-    loop {
-        let n = class.read_packet(&mut buf).await?;
-        let data = &buf[..n];
-        info!("data: {:x}", data);
-        class.write_packet(b"\necho ").await?;
-        class.write_packet(data).await?;
     }
 }

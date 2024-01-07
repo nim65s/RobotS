@@ -1,5 +1,6 @@
 /// Errors handling in the code: fallible fonctions will return a Result over this
 #[derive(thiserror::Error, Debug)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum Error {
     #[error("numerical error {0}")]
     Num(#[from] core::num::TryFromIntError),
