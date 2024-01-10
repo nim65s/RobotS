@@ -14,9 +14,9 @@ use embassy_futures::{
 };
 use embassy_stm32::{
     bind_interrupts,
-    exti::ExtiInput,
-    gpio::{Input, Level, Output, Pull, Speed},
-    peripherals::{PA0, PB2, USB},
+    exti::{Channel, ExtiInput},
+    gpio::{AnyPin, Input, Level, Output, Pull, Speed},
+    peripherals::USB,
     time::Hertz,
     usb::{Driver, InterruptHandler},
     Config,
@@ -59,8 +59,9 @@ async fn main(spawner: Spawner) {
         Timer::after_millis(10).await;
     }
 
-    let led = Output::new(p.PB2, Level::High, Speed::Low);
-    let btn = ExtiInput::new(Input::new(p.PA0, Pull::Down), p.EXTI0);
+    let led = Output::new(p.PB2, Level::High, Speed::Low).degrade();
+    let btn = Input::new(p.PA0, Pull::Down).degrade();
+    let btn = ExtiInput::new(btn, p.EXTI0.degrade());
     let usb_driver = Driver::new(p.USB, Irqs, p.PA12, p.PA11);
 
     let recv_sig = make_static!(Signal::new());
@@ -183,7 +184,7 @@ async fn dispatch_task(
 }
 
 #[embassy_executor::task]
-async fn btn_task(mut btn: ExtiInput<'static, PA0>, send_sig: &'static CmdSignal) {
+async fn btn_task(mut btn: ExtiInput<'static, AnyPin>, send_sig: &'static CmdSignal) {
     loop {
         btn.wait_for_rising_edge().await;
         send_sig.signal(Cmd::Button);
@@ -192,7 +193,7 @@ async fn btn_task(mut btn: ExtiInput<'static, PA0>, send_sig: &'static CmdSignal
 }
 
 #[embassy_executor::task]
-async fn led_task(mut led: Output<'static, PB2>, led_sig: &'static LedSignal) {
+async fn led_task(mut led: Output<'static, AnyPin>, led_sig: &'static LedSignal) {
     loop {
         let level = led_sig.wait().await;
         led.set_level(level.into());
