@@ -52,9 +52,9 @@ fn monitor_err(mon_sig: &'static MonSignal, e: impl Into<Error>) {
 }
 
 #[embassy_executor::task]
-async fn tx_task(mut tx: TX0, cmd_sig: &'static CmdSignal, mon_sig: &'static MonSignal) {
+async fn tx_task(mut tx: TX0, send_sig: &'static CmdSignal, mon_sig: &'static MonSignal) {
     loop {
-        let cmd = cmd_sig.wait().await;
+        let cmd = send_sig.wait().await;
         match cmd.to_vec() {
             Err(e) => monitor_err(mon_sig, e),
             Ok(v) => {
@@ -72,7 +72,7 @@ async fn tx_task(mut tx: TX0, cmd_sig: &'static CmdSignal, mon_sig: &'static Mon
 #[embassy_executor::task]
 async fn rx_task(
     mut rx: RX0,
-    cmd_sig: &'static CmdSignal,
+    send_sig: &'static CmdSignal,
     hue_sig: &'static HueSignal,
     mon_sig: &'static MonSignal,
 ) {
@@ -90,7 +90,7 @@ async fn rx_task(
                 Ok(mut v) => {
                     match Cmd::from_vec(&mut v) {
                         Err(e) => monitor_err(mon_sig, e),
-                        Ok(Cmd::Ping) => cmd_sig.signal(Cmd::Pong),
+                        Ok(Cmd::Ping) => send_sig.signal(Cmd::Pong),
                         Ok(Cmd::Hue(h)) => hue_sig.signal(h),
                         Ok(_) => {}
                     };
@@ -122,10 +122,10 @@ async fn led_task(mut led: Led, hue_sig: &'static HueSignal, mon_sig: &'static M
 }
 
 #[embassy_executor::task]
-async fn btn_task(mut btn: Btn, cmd_sig: &'static CmdSignal, mon_sig: &'static MonSignal) {
+async fn btn_task(mut btn: Btn, send_sig: &'static CmdSignal, mon_sig: &'static MonSignal) {
     loop {
         btn.wait_for_falling_edge().await.ok();
-        cmd_sig.signal(Cmd::Button);
+        send_sig.signal(Cmd::Button);
         if let Ok(s) = String::try_from("btn end") {
             mon_sig.signal(s);
         }
@@ -145,10 +145,10 @@ async fn monitor_task(mut tx: TX1, mon_sig: &'static MonSignal) {
 }
 
 #[embassy_executor::task]
-async fn ping_task(cmd_sig: &'static CmdSignal, mon_sig: &'static MonSignal) {
+async fn ping_task(send_sig: &'static CmdSignal, mon_sig: &'static MonSignal) {
     loop {
         Timer::after(Duration::from_millis(3_000)).await;
-        cmd_sig.signal(Cmd::Ping);
+        send_sig.signal(Cmd::Ping);
         if let Ok(s) = String::try_from("ping end") {
             mon_sig.signal(s);
         }
@@ -170,7 +170,7 @@ async fn main(spawner: Spawner) {
     let timer_group0 = esp32c3_hal::timer::TimerGroup::new(peripherals.TIMG0, &clocks);
     embassy::init(&clocks, timer_group0.timer0);
 
-    let cmd_sig = make_static!(Signal::new());
+    let send_sig = make_static!(Signal::new());
     let hue_sig = make_static!(Signal::new());
     let mon_sig = make_static!(Signal::new());
 
@@ -199,10 +199,10 @@ async fn main(spawner: Spawner) {
     interrupt::enable(Interrupt::GPIO, interrupt::Priority::Priority2)
         .unwrap_or_else(|e| monitor_err(mon_sig, e));
 
-    spawner.spawn(rx_task(rx0, cmd_sig, hue_sig, mon_sig)).ok();
-    spawner.spawn(tx_task(tx0, cmd_sig, mon_sig)).ok();
-    spawner.spawn(btn_task(btn, cmd_sig, mon_sig)).ok();
-    spawner.spawn(ping_task(cmd_sig, mon_sig)).ok();
+    spawner.spawn(rx_task(rx0, send_sig, hue_sig, mon_sig)).ok();
+    spawner.spawn(tx_task(tx0, send_sig, mon_sig)).ok();
+    spawner.spawn(btn_task(btn, send_sig, mon_sig)).ok();
+    spawner.spawn(ping_task(send_sig, mon_sig)).ok();
     spawner.spawn(monitor_task(tx1, mon_sig)).ok();
     match rmt {
         Err(e) => monitor_err(mon_sig, e),

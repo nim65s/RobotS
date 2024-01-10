@@ -50,27 +50,27 @@ async fn main(spawner: Spawner) {
     }
 
     let usb_driver = Driver::new(p.USB, Irqs, p.PA12, p.PA11);
-    let cmd_sig = make_static!(Signal::new());
+    let send_sig = make_static!(Signal::new());
 
     info!("Go !");
-    if let Err(e) = spawner.spawn(usb_task(usb_driver, cmd_sig)) {
+    if let Err(e) = spawner.spawn(usb_task(usb_driver, send_sig)) {
         error!("usb_task error: {:?}", e);
     }
-    if let Err(e) = spawner.spawn(ping_task(cmd_sig)) {
+    if let Err(e) = spawner.spawn(ping_task(send_sig)) {
         error!("ping_task error: {:?}", e);
     }
 }
 
 #[embassy_executor::task]
-async fn ping_task(cmd_sig: &'static CmdSignal) {
+async fn ping_task(send_sig: &'static CmdSignal) {
     loop {
         Timer::after_millis(3_000).await;
-        cmd_sig.signal(Cmd::Ping);
+        send_sig.signal(Cmd::Ping);
     }
 }
 
 #[embassy_executor::task]
-async fn usb_task(driver: UsbDriver, cmd_sig: &'static CmdSignal) {
+async fn usb_task(driver: UsbDriver, send_sig: &'static CmdSignal) {
     let config = embassy_usb::Config::new(0xc0de, 0xcafe);
     let mut device_descriptor = [0; 256];
     let mut config_descriptor = [0; 256];
@@ -98,7 +98,7 @@ async fn usb_task(driver: UsbDriver, cmd_sig: &'static CmdSignal) {
             class.wait_connection().await;
             info!("Connected");
             loop {
-                match select(class.read_packet(&mut buf), cmd_sig.wait()).await {
+                match select(class.read_packet(&mut buf), send_sig.wait()).await {
                     Either::First(Err(e)) => {
                         error!("usb read {:?}", e);
                         break;
@@ -107,7 +107,7 @@ async fn usb_task(driver: UsbDriver, cmd_sig: &'static CmdSignal) {
                         Err(()) => error!("Vec::from_slice {:?} {}", buf, len),
                         Ok(mut v) => match Cmd::from_vec(&mut v) {
                             Err(e) => error!("Cmd::from_vec {:?}", e),
-                            Ok(Cmd::Ping) => cmd_sig.signal(Cmd::Pong),
+                            Ok(Cmd::Ping) => send_sig.signal(Cmd::Pong),
                             Ok(cmd) => info!("Received {:?}", cmd),
                         },
                     },
