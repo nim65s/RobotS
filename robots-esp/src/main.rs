@@ -70,12 +70,22 @@ async fn tx_task(mut tx: TX0, send_sig: &'static CmdSignal, mon_sig: &'static Mo
 }
 
 #[embassy_executor::task]
-async fn rx_task(
-    mut rx: RX0,
+async fn dispatch_task(
+    recv_sig: &'static CmdSignal,
     send_sig: &'static CmdSignal,
     hue_sig: &'static HueSignal,
-    mon_sig: &'static MonSignal,
 ) {
+    loop {
+        match recv_sig.wait().await {
+            Cmd::Ping => send_sig.signal(Cmd::Pong),
+            Cmd::Hue(h) => hue_sig.signal(h),
+            _ => {}
+        }
+    }
+}
+
+#[embassy_executor::task]
+async fn rx_task(mut rx: RX0, recv_sig: &'static CmdSignal, mon_sig: &'static MonSignal) {
     let mut rbuf: [u8; CMD_MAX_SIZE] = [0u8; CMD_MAX_SIZE];
 
     loop {
@@ -90,9 +100,7 @@ async fn rx_task(
                 Ok(mut v) => {
                     match Cmd::from_vec(&mut v) {
                         Err(e) => monitor_err(mon_sig, e),
-                        Ok(Cmd::Ping) => send_sig.signal(Cmd::Pong),
-                        Ok(Cmd::Hue(h)) => hue_sig.signal(h),
-                        Ok(_) => {}
+                        Ok(cmd) => recv_sig.signal(cmd),
                     };
                 }
             },
@@ -170,6 +178,7 @@ async fn main(spawner: Spawner) {
     let timer_group0 = esp32c3_hal::timer::TimerGroup::new(peripherals.TIMG0, &clocks);
     embassy::init(&clocks, timer_group0.timer0);
 
+    let recv_sig = make_static!(Signal::new());
     let send_sig = make_static!(Signal::new());
     let hue_sig = make_static!(Signal::new());
     let mon_sig = make_static!(Signal::new());
@@ -199,8 +208,11 @@ async fn main(spawner: Spawner) {
     interrupt::enable(Interrupt::GPIO, interrupt::Priority::Priority2)
         .unwrap_or_else(|e| monitor_err(mon_sig, e));
 
-    spawner.spawn(rx_task(rx0, send_sig, hue_sig, mon_sig)).ok();
+    spawner.spawn(rx_task(rx0, recv_sig, mon_sig)).ok();
     spawner.spawn(tx_task(tx0, send_sig, mon_sig)).ok();
+    spawner
+        .spawn(dispatch_task(recv_sig, send_sig, hue_sig))
+        .ok();
     spawner.spawn(btn_task(btn, send_sig, mon_sig)).ok();
     spawner.spawn(ping_task(send_sig, mon_sig)).ok();
     spawner.spawn(monitor_task(tx1, mon_sig)).ok();
