@@ -6,7 +6,7 @@
 
 use embassy_executor::Spawner;
 use embassy_sync::{blocking_mutex::raw::NoopRawMutex, signal::Signal};
-use embassy_time::{Duration, Timer};
+use embassy_time::{Duration, Ticker};
 use embedded_hal_async::digital::Wait;
 use embedded_io_async::Write;
 use esp32c3_hal::{
@@ -154,8 +154,9 @@ async fn monitor_task(mut tx: TX1, mon_sig: &'static MonSignal) {
 
 #[embassy_executor::task]
 async fn ping_task(send_sig: &'static CmdSignal, mon_sig: &'static MonSignal) {
+    let mut ticker = Ticker::every(Duration::from_secs(3));
     loop {
-        Timer::after(Duration::from_millis(3_000)).await;
+        ticker.next().await;
         send_sig.signal(Cmd::Ping);
         if let Ok(s) = String::try_from("ping end") {
             mon_sig.signal(s);

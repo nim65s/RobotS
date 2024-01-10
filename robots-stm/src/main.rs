@@ -22,7 +22,7 @@ use embassy_stm32::{
     Config,
 };
 use embassy_sync::{blocking_mutex::raw::NoopRawMutex, signal::Signal};
-use embassy_time::Timer;
+use embassy_time::{Duration, Ticker, Timer};
 use embassy_usb::{
     class::cdc_acm::{CdcAcmClass, State},
     driver::EndpointError,
@@ -88,8 +88,9 @@ async fn main(spawner: Spawner) {
 
 #[embassy_executor::task]
 async fn ping_task(send_sig: &'static CmdSignal) {
+    let mut ticker = Ticker::every(Duration::from_secs(3));
     loop {
-        Timer::after_millis(3_000).await;
+        ticker.next().await;
         send_sig.signal(Cmd::Ping);
     }
 }
