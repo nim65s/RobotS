@@ -5,6 +5,7 @@ use robots_drv::{driver, Cmd, Result, RX, TX};
 #[tokio::main]
 async fn main() -> Result<()> {
     let port = option_env!("ROBOTS_PORT").unwrap_or("/dev/ttyUSB0");
+    let rgb = option_env!("ROBOTS_RGB").unwrap_or("false") == "true";
     let uart_port = serialport::new(port, 115_200);
 
     driver(uart_port)?;
@@ -17,17 +18,28 @@ async fn main() -> Result<()> {
         }
     });
 
-    let mut ten_hz = interval(Duration::from_millis(100));
-
     let mut cmd = Cmd::Ping;
+    let mut led = true;
     println!("sending {cmd:?}...");
     tx.send(&cmd).await?;
 
-    for hue in 0..=255 {
-        ten_hz.tick().await;
-        println!("sending {cmd:?}...");
-        tx.send(&cmd).await?;
-        cmd = Cmd::Hue(hue);
+    if rgb {
+        let mut ten_hz = interval(Duration::from_millis(100));
+        for hue in 0..=255 {
+            ten_hz.tick().await;
+            println!("sending {cmd:?}...");
+            tx.send(&cmd).await?;
+            cmd = Cmd::Hue(hue);
+        }
+    } else {
+        let mut hz = interval(Duration::from_secs(1));
+        for _ in 0..30 {
+            hz.tick().await;
+            println!("sending {cmd:?}...");
+            tx.send(&cmd).await?;
+            led = !led;
+            cmd = Cmd::Led(led);
+        }
     }
 
     Ok(())
