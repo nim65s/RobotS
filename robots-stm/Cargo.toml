@@ -16,7 +16,6 @@ embassy-stm32 = { git = "https://github.com/embassy-rs/embassy", tag = "embassy-
 embassy-sync = { git = "https://github.com/embassy-rs/embassy", tag = "embassy-time-v0.2.0", features = ["defmt"] }
 embassy-time = { git = "https://github.com/embassy-rs/embassy", tag = "embassy-time-v0.2.0", features = ["defmt", "defmt-timestamp-uptime", "tick-hz-32_768"] }
 embassy-usb = { git = "https://github.com/embassy-rs/embassy", tag = "embassy-time-v0.2.0", features = ["defmt"] }
-embedded-hal = "0.2.7"
 futures = { version = "0.3.29", features = ["async-await"], default-features = false }
 heapless = { version = "0.8.0", default-features = false }
 panic-probe = { version = "0.3.1", features = ["print-defmt"] }
