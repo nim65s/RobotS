@@ -9,14 +9,14 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 actix-files = { version = "0.6", optional = true }
 actix-web = { version = "4", optional = true, features = ["macros"] }
-async-channel = { version = "1", optional = true }
+async-channel = { version = "2", optional = true }
 broadcaster = { version = "1", optional = true }
 cfg-if = "1"
 chrono = "0.4"
 console_error_panic_hook = "0.1"
 console_log = "1"
 futures = { version = "0.3" }
-gloo-net = { version = "0.4", optional = true }
+gloo-net = { version = "0.5", optional = true }
 lazy_static = { version = "1", optional = true }
 leptos = { version = "0.5", features = ["serde", ] }
 leptos_actix = { version = "0.5", optional = true }
