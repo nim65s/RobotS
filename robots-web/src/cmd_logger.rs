@@ -85,6 +85,8 @@ pub fn CmdLogger() -> impl IntoView {
         <button class={button} on:click=move |_| {cmd_sender.dispatch(Cmd::Hue(150))}>"Blue"</button>
         <button class={button} on:click=move |_| {cmd_sender.dispatch(Cmd::Hue(200))}>"Violet"</button>
         <br />
+        <button class={button} on:click=move |_| {set_cmds.set(vec![])}>"Clear"</button>
+        <br />
         <div class="grid grid-cols-3 text-slate-100">
             <div class="underline">"Received"</div>
             <div class="underline">"Timestamp"</div>
