@@ -69,8 +69,17 @@ pub fn CmdLogger() -> impl IntoView {
                   shadow-lg hover:shadow-xl active:shadow-2xl";
 
     view! {
+        <button class={button} on:click=move |_| {cmd_sender.dispatch(Cmd::Hello)}>"Hello"</button>
         <button class={button} on:click=move |_| {cmd_sender.dispatch(Cmd::Ping)}>"Ping"</button>
         <button class={button} on:click=move |_| {cmd_sender.dispatch(Cmd::Pong)}>"Pong"</button>
+        <button class={button} on:click=move |_| {cmd_sender.dispatch(Cmd::Button)}>"Button"</button>
+        <br />
+        <button class={button} on:click=move |_| {cmd_sender.dispatch(Cmd::Led(true))}>"LED ON"</button>
+        <button class={button} on:click=move |_| {cmd_sender.dispatch(Cmd::Led(false))}>"LED OFF"</button>
+        <br />
+        <button class={button} on:click=move |_| {cmd_sender.dispatch(Cmd::Relay(true))}>"Relay ON"</button>
+        <button class={button} on:click=move |_| {cmd_sender.dispatch(Cmd::Relay(false))}>"Relay OFF"</button>
+        <br />
         <button class={button} on:click=move |_| {cmd_sender.dispatch(Cmd::Hue(0))}>"Red"</button>
         <button class={button} on:click=move |_| {cmd_sender.dispatch(Cmd::Hue(50))}>"Yellow"</button>
         <button class={button} on:click=move |_| {cmd_sender.dispatch(Cmd::Hue(100))}>"Green"</button>

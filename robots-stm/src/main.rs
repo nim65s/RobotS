@@ -179,7 +179,7 @@ async fn dispatch_task(
         match recv_sig.wait().await {
             Cmd::Ping => send_sig.signal(Cmd::Pong),
             Cmd::Led(state) => led_sig.signal(state),
-            cmd => info!("Received {:?}", cmd),
+            cmd => info!("Ignore received {:?}", cmd),
         }
     }
 }
