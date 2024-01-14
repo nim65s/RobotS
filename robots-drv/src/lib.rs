@@ -38,7 +38,11 @@ impl Driver {
         loop {
             tokio::select! {
                 Some(cmd) = self.reader.next() => {
-                    rx.send(&cmd?).await?;
+                    let cmd = cmd?;
+                    rx.send(&cmd).await?;
+                    if cmd == Cmd::Ping {
+                        self.writer.send(Cmd::Pong).await?;
+                    }
                 }
                 Some(cmd) = tx.next() => {
                     self.writer.send(cmd).await?;
