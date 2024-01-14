@@ -69,6 +69,9 @@ async fn main(spawner: Spawner) {
     let led_sig = make_static!(Signal::new());
 
     info!("Go !");
+    if let Err(e) = spawner.spawn(tick_task()) {
+        error!("tick_task error: {:?}", e);
+    }
     if let Err(e) = spawner.spawn(usb_task(usb_driver, recv_sig, send_sig)) {
         error!("usb_task error: {:?}", e);
     }
@@ -76,13 +79,22 @@ async fn main(spawner: Spawner) {
         error!("ping_task error: {:?}", e);
     }
     if let Err(e) = spawner.spawn(dispatch_task(recv_sig, send_sig, led_sig)) {
-        error!("ping_task error: {:?}", e);
+        error!("dispatch_task error: {:?}", e);
     }
     if let Err(e) = spawner.spawn(led_task(led, led_sig)) {
         error!("led_task error: {:?}", e);
     }
     if let Err(e) = spawner.spawn(btn_task(btn, send_sig)) {
         error!("btn_task error: {:?}", e);
+    }
+}
+
+#[embassy_executor::task]
+async fn tick_task() {
+    let mut ticker = Ticker::every(Duration::from_secs(3));
+    loop {
+        ticker.next().await;
+        info!("tick");
     }
 }
 
