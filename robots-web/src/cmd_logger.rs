@@ -25,11 +25,10 @@ pub async fn send_cmd(cmd: Cmd) -> Result<(), ServerFnError> {
 #[allow(clippy::module_name_repetitions)]
 pub fn CmdLogger() -> impl IntoView {
     #[allow(unused_variables)]
-    let (recv_cmds, set_recv_cmds) = create_signal::<Vec<(DateTime<Utc>, Cmd)>>(vec![]);
-    let (sent_cmds, set_sent_cmds) = create_signal::<Vec<(DateTime<Utc>, Cmd)>>(vec![]);
+    let (cmds, set_cmds) = create_signal::<Vec<(DateTime<Utc>, bool, Cmd)>>(vec![]);
 
     let cmd_sender = create_action(move |cmd: &Cmd| {
-        set_sent_cmds.update(|cmds| cmds.push((Utc::now(), *cmd)));
+        set_cmds.update(|cmds| cmds.push((Utc::now(), true, *cmd)));
         send_cmd(*cmd)
     });
 
@@ -48,7 +47,7 @@ pub fn CmdLogger() -> impl IntoView {
                                 Ok((_, v)) => match Cmd::from_sse(&v) {
                                     Err(e) => format!("sse decoding error: {e:?}"),
                                     Ok(Some(v)) => {
-                                        set_recv_cmds.update(|cmds| cmds.push((Utc::now(), v)));
+                                        set_cmds.update(|cmds| cmds.push((Utc::now(), false, v)));
                                         logging::log!("got {v:?}");
                                         format!("{v:?}")
                                     }
@@ -86,23 +85,19 @@ pub fn CmdLogger() -> impl IntoView {
         <button class={button} on:click=move |_| {cmd_sender.dispatch(Cmd::Hue(150))}>"Blue"</button>
         <button class={button} on:click=move |_| {cmd_sender.dispatch(Cmd::Hue(200))}>"Violet"</button>
         <br />
-        <div class="flex text-slate-100">
-            <ol class="flex-auto">
-                <li class="underline">"Received"</li>
-                <For
-                    each=move || recv_cmds.get()
-                    key=|cmd| cmd.0
-                    children=|(dt, cmd)| view! { <li>{format!("{dt:?} {cmd:?}")}</li> }
-                />
-            </ol>
-            <ol class="flex-auto">
-                <li class="underline">"Sent"</li>
-                <For
-                    each=move || sent_cmds.get()
-                    key=|cmd| cmd.0
-                    children=|(dt, cmd)| view! { <li>{format!("{dt:?} {cmd:?}")}</li> }
-                />
-            </ol>
+        <div class="grid grid-cols-3 text-slate-100">
+            <div class="underline">"Received"</div>
+            <div class="underline">"Timestamp"</div>
+            <div class="underline">"Sent"</div>
+            <For
+                each=move || cmds.get()
+                key=|cmd| cmd.0
+                children=|(dt, sent, cmd)| view! {
+                    <div><Show when=move || !sent>{format!("{cmd:?}")}</Show></div>
+                    <div>{format!("{dt:?}")}</div>
+                    <div><Show when=move || sent>{format!("{cmd:?}")}</Show></div>
+                }
+            />
         </div>
     }
 }
