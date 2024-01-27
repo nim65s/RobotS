@@ -17,7 +17,7 @@ use gloo_net::eventsource::futures::EventSource;
 pub async fn send_cmd(cmd: Cmd) -> Result<(), ServerFnError> {
     TX.send(&cmd)
         .await
-        .map_err(|e| ServerFnError::ServerError(e.to_string()))
+        .map_err(|e| ServerFnError::new(e.to_string()))
 }
 
 #[component]
