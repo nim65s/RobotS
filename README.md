@@ -10,4 +10,4 @@ Rust to Roboticists, including the [rust-embedded](https://github.com/rust-embed
 This mostly show how we can design a message system with Rust enums, and serialize them to exchange messages between a
 webbrowser (eg. in HTTP) and a microcontroller (eg. in UART) through a simple server.
 
-It works on a ESP32-C3-DevKitC-02v1.1
+It works on a ESP32-C3-DevKitC-02v1.1 and a bluepill.
