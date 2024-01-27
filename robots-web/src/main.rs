@@ -45,7 +45,6 @@ cfg_if::cfg_if! {
 
                 App::new()
                     .service(uart_rx_to_sse)
-                    .route("/api/{tail:.*}", leptos_actix::handle_server_fns())
                     .leptos_routes(
                         leptos_options.to_owned(),
                         routes.clone(),

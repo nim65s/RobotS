@@ -63,7 +63,7 @@ dependencies = [
  "flate2",
  "futures-core",
  "h2",
- "http",
+ "http 0.2.11",
  "httparse",
  "httpdate",
  "itoa",
@@ -98,7 +98,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d22475596539443685426b6bdadb926ad0ecaefdfc5fb05e5e3441f15463c511"
 dependencies = [
  "bytestring",
- "http",
+ "http 0.2.11",
  "regex",
  "serde",
  "tracing",
@@ -846,6 +846,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "dashmap"
+version = "5.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "978747c1d849a7d2ee5e8adc0159961c48fb7e5db2f06af6723b80123bb53856"
+dependencies = [
+ "cfg-if 1.0.0",
+ "hashbrown 0.14.3",
+ "lock_api 0.4.11",
+ "once_cell",
+ "parking_lot_core 0.9.9",
+]
+
+[[package]]
 name = "defmt"
 version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1339,7 +1352,7 @@ dependencies = [
  "futures-core",
  "futures-sink",
  "gloo-utils 0.2.0",
- "http",
+ "http 0.2.11",
  "js-sys",
  "pin-project",
  "serde",
@@ -1387,7 +1400,7 @@ dependencies = [
  "futures-core",
  "futures-sink",
  "futures-util",
- "http",
+ "http 0.2.11",
  "indexmap",
  "slab",
  "tokio",
@@ -1496,13 +1509,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "http"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b32afd38673a8016f7c9ae69e5af41a58f81b1d31689040f2f1959594ce194ea"
+dependencies = [
+ "bytes",
+ "fnv",
+ "itoa",
+]
+
+[[package]]
 name = "http-body"
 version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ceab25649e9960c0311ea418d17bee82c0dcec1bd053b5f9a66e265a693bed2"
 dependencies = [
  "bytes",
- "http",
+ "http 0.2.11",
  "pin-project-lite",
 ]
 
@@ -1535,7 +1559,7 @@ dependencies = [
  "futures-core",
  "futures-util",
  "h2",
- "http",
+ "http 0.2.11",
  "http-body",
  "httparse",
  "httpdate",
@@ -1686,12 +1710,31 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "269ba4ba91ffa73d9559c975e0be17bd4eb34c6b6abd7fdd5704106132d89d2a"
 dependencies = [
  "cfg-if 1.0.0",
- "leptos_config",
- "leptos_dom",
- "leptos_macro",
- "leptos_reactive",
- "leptos_server",
- "server_fn",
+ "leptos_config 0.5.7",
+ "leptos_dom 0.5.7",
+ "leptos_macro 0.5.7",
+ "leptos_reactive 0.5.7",
+ "leptos_server 0.5.7",
+ "server_fn 0.5.7",
+ "tracing",
+ "typed-builder",
+ "typed-builder-macro",
+ "web-sys",
+]
+
+[[package]]
+name = "leptos"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "10b936412e6ff7b7d4033043f1382c687a9f1995a9871a68b7189f408133c2a0"
+dependencies = [
+ "cfg-if 1.0.0",
+ "leptos_config 0.6.3",
+ "leptos_dom 0.6.3",
+ "leptos_macro 0.6.3",
+ "leptos_reactive 0.6.3",
+ "leptos_server 0.6.3",
+ "server_fn 0.6.3",
  "tracing",
  "typed-builder",
  "typed-builder-macro",
@@ -1701,20 +1744,22 @@ dependencies = [
 
 [[package]]
 name = "leptos_actix"
-version = "0.5.7"
+version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89db4657bdcd28193e9d8cd640ec5d76b55abdf4b16cd5066f1b03f8aea49758"
+checksum = "92134043c37c1415c0294de753023680ebaa9a9bed2404a963a308d7631dc409"
 dependencies = [
  "actix-http",
  "actix-web",
  "futures",
- "leptos",
+ "leptos 0.6.3",
  "leptos_integration_utils",
+ "leptos_macro 0.6.3",
  "leptos_meta",
  "leptos_router",
  "parking_lot 0.12.1",
  "regex",
  "serde_json",
+ "server_fn 0.6.3",
  "tokio",
  "tracing",
 ]
@@ -1724,6 +1769,19 @@ name = "leptos_config"
 version = "0.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e72d8689d54737991831e9b279bb4fba36d27a93aa975c75cd4241d9a4a425ec"
+dependencies = [
+ "config",
+ "regex",
+ "serde",
+ "thiserror",
+ "typed-builder",
+]
+
+[[package]]
+name = "leptos_config"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2a809362f6a14c740bfb38a9d8151ab06be7ccd4049a3354c1aab0f8d2bdf741"
 dependencies = [
  "config",
  "regex",
@@ -1747,14 +1805,44 @@ dependencies = [
  "indexmap",
  "itertools",
  "js-sys",
- "leptos_reactive",
+ "leptos_reactive 0.5.7",
  "once_cell",
  "pad-adapter",
  "paste",
  "rustc-hash",
  "serde",
  "serde_json",
- "server_fn",
+ "server_fn 0.5.7",
+ "smallvec",
+ "tracing",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
+
+[[package]]
+name = "leptos_dom"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d4e58dcb4c8504460eda3c57919ffa826c44a542253c6c93be75d21bfcd2b776"
+dependencies = [
+ "async-recursion",
+ "cfg-if 1.0.0",
+ "drain_filter_polyfill",
+ "futures",
+ "getrandom",
+ "html-escape",
+ "indexmap",
+ "itertools",
+ "js-sys",
+ "leptos_reactive 0.6.3",
+ "once_cell",
+ "pad-adapter",
+ "paste",
+ "rustc-hash",
+ "serde",
+ "serde_json",
+ "server_fn 0.6.3",
  "smallvec",
  "tracing",
  "wasm-bindgen",
@@ -1781,15 +1869,33 @@ dependencies = [
 ]
 
 [[package]]
-name = "leptos_integration_utils"
-version = "0.5.7"
+name = "leptos_hot_reload"
+version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fddda3a3b768dad90f80fb56ac6e250bc5c60755f8e3df225913aba4364ed7ee"
+checksum = "273d7f2f1823a70944a72c8b47f925c489e38f6121808cd4c7f759b1b5efd5e6"
+dependencies = [
+ "anyhow",
+ "camino",
+ "indexmap",
+ "parking_lot 0.12.1",
+ "proc-macro2",
+ "quote",
+ "rstml",
+ "serde",
+ "syn 2.0.48",
+ "walkdir",
+]
+
+[[package]]
+name = "leptos_integration_utils"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "172169abef42e1d2c5c4e17d58e2521669ec600808590a03c58c6a87eabf76b0"
 dependencies = [
  "futures",
- "leptos",
- "leptos_config",
- "leptos_hot_reload",
+ "leptos 0.6.3",
+ "leptos_config 0.6.3",
+ "leptos_hot_reload 0.6.3",
  "leptos_meta",
  "tracing",
 ]
@@ -1805,13 +1911,36 @@ dependencies = [
  "convert_case 0.6.0",
  "html-escape",
  "itertools",
- "leptos_hot_reload",
+ "leptos_hot_reload 0.5.7",
  "prettyplease",
  "proc-macro-error",
  "proc-macro2",
  "quote",
  "rstml",
- "server_fn_macro",
+ "server_fn_macro 0.5.7",
+ "syn 2.0.48",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "leptos_macro"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "669b724389f52fa2b0c8eb55fc1cd652a6738360d0a76d966b62fb3368fc0bf7"
+dependencies = [
+ "attribute-derive",
+ "cfg-if 1.0.0",
+ "convert_case 0.6.0",
+ "html-escape",
+ "itertools",
+ "leptos_hot_reload 0.6.3",
+ "prettyplease",
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "rstml",
+ "server_fn_macro 0.6.3",
  "syn 2.0.48",
  "tracing",
  "uuid",
@@ -1819,13 +1948,13 @@ dependencies = [
 
 [[package]]
 name = "leptos_meta"
-version = "0.5.7"
+version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1bc25c0f7f14ed5daf42b8d0d273ed790b0449e8ba8cff1c2fa800dc90a75acb"
+checksum = "3f6ae4f0934d77239f57dec8b438a2c7e8662a46c4704fed8d831f5329c6fcfb"
 dependencies = [
  "cfg-if 1.0.0",
  "indexmap",
- "leptos",
+ "leptos 0.6.3",
  "tracing",
  "wasm-bindgen",
  "web-sys",
@@ -1841,13 +1970,36 @@ dependencies = [
  "cfg-if 1.0.0",
  "futures",
  "indexmap",
+ "paste",
+ "pin-project",
+ "rustc-hash",
+ "self_cell",
+ "serde",
+ "serde-wasm-bindgen 0.5.0",
+ "serde_json",
+ "slotmap",
+ "thiserror",
+ "tracing",
+ "wasm-bindgen-futures",
+]
+
+[[package]]
+name = "leptos_reactive"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3624e8d4d2da4c79adc045c177be50050c70fb266d30d93892676f8100bb68aa"
+dependencies = [
+ "base64",
+ "cfg-if 1.0.0",
+ "futures",
+ "indexmap",
  "js-sys",
  "paste",
  "pin-project",
  "rustc-hash",
  "self_cell",
  "serde",
- "serde-wasm-bindgen",
+ "serde-wasm-bindgen 0.6.3",
  "serde_json",
  "slotmap",
  "thiserror",
@@ -1860,9 +2012,9 @@ dependencies = [
 
 [[package]]
 name = "leptos_router"
-version = "0.5.7"
+version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b31087173c60e25c329a1c6786756dd9ee97750b378622df4d780db160a09040"
+checksum = "c0964eb6de904e102b71ed5707594edfbabe11789cc9bc097e5556574324ce7c"
 dependencies = [
  "cached",
  "cfg-if 1.0.0",
@@ -1870,7 +2022,7 @@ dependencies = [
  "itertools",
  "js-sys",
  "lazy_static",
- "leptos",
+ "leptos 0.6.3",
  "leptos_integration_utils",
  "leptos_meta",
  "linear-map",
@@ -1878,6 +2030,7 @@ dependencies = [
  "once_cell",
  "percent-encoding",
  "regex",
+ "send_wrapper",
  "serde",
  "serde_json",
  "serde_qs",
@@ -1897,10 +2050,26 @@ checksum = "2fd1517c2024bc47d764e96053e55b927f8a2159e735a0cc47232542b493df9d"
 dependencies = [
  "inventory",
  "lazy_static",
- "leptos_macro",
- "leptos_reactive",
+ "leptos_macro 0.5.7",
+ "leptos_reactive 0.5.7",
  "serde",
- "server_fn",
+ "server_fn 0.5.7",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
+name = "leptos_server"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9b31b4f6e1afecb955011548516020feab2ce165c407508e6357ad2a29e91c18"
+dependencies = [
+ "inventory",
+ "lazy_static",
+ "leptos_macro 0.6.3",
+ "leptos_reactive 0.6.3",
+ "serde",
+ "server_fn 0.6.3",
  "thiserror",
  "tracing",
 ]
@@ -2538,7 +2707,7 @@ dependencies = [
  "futures-core",
  "futures-util",
  "h2",
- "http",
+ "http 0.2.11",
  "http-body",
  "hyper",
  "ipnet",
@@ -2618,7 +2787,7 @@ dependencies = [
  "esp-hal-smartled",
  "esp32c3-hal",
  "heapless 0.7.17",
- "leptos",
+ "leptos 0.5.7",
  "postcard",
  "serde",
  "serde_json",
@@ -2641,7 +2810,7 @@ dependencies = [
  "futures",
  "gloo-net 0.5.0",
  "lazy_static",
- "leptos",
+ "leptos 0.6.3",
  "leptos_actix",
  "leptos_meta",
  "leptos_router",
@@ -2733,6 +2902,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b97ed7a9823b74f99c7742f5336af7be5ecd3eeafcb1507d1fa93347b1d589b0"
 
 [[package]]
+name = "send_wrapper"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd0b0ec5f1c1ca621c432a25813d8d60c88abe6d3e08a3eb9cf37d97a0fe3d73"
+dependencies = [
+ "futures-core",
+]
+
+[[package]]
 name = "serde"
 version = "1.0.196"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2746,6 +2924,17 @@ name = "serde-wasm-bindgen"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f3b143e2833c57ab9ad3ea280d21fd34e285a42837aeb0ee301f4f41890fa00e"
+dependencies = [
+ "js-sys",
+ "serde",
+ "wasm-bindgen",
+]
+
+[[package]]
+name = "serde-wasm-bindgen"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9b713f70513ae1f8d92665bbbbda5c295c2cf1da5542881ae5eefe20c9af132"
 dependencies = [
  "js-sys",
  "serde",
@@ -2834,7 +3023,6 @@ dependencies = [
  "ciborium",
  "const_format",
  "gloo-net 0.2.6",
- "inventory",
  "js-sys",
  "lazy_static",
  "once_cell",
@@ -2844,9 +3032,40 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_qs",
- "server_fn_macro_default",
+ "server_fn_macro_default 0.5.7",
  "syn 2.0.48",
  "thiserror",
+ "xxhash-rust",
+]
+
+[[package]]
+name = "server_fn"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e7ede360796ba28c57625aa7cbbb25e7e87408f93cc662b68244d7dbfa1f589f"
+dependencies = [
+ "actix-web",
+ "bytes",
+ "ciborium",
+ "const_format",
+ "dashmap",
+ "futures",
+ "gloo-net 0.5.0",
+ "http 1.0.0",
+ "inventory",
+ "js-sys",
+ "once_cell",
+ "send_wrapper",
+ "serde",
+ "serde_json",
+ "serde_qs",
+ "server_fn_macro_default 0.6.3",
+ "thiserror",
+ "url",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "wasm-streams",
+ "web-sys",
  "xxhash-rust",
 ]
 
@@ -2866,12 +3085,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "server_fn_macro"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b69afff1278975e9f862661a1bc5d8944aa9b542215359a550d4054864423779"
+dependencies = [
+ "const_format",
+ "convert_case 0.6.0",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.48",
+ "xxhash-rust",
+]
+
+[[package]]
 name = "server_fn_macro_default"
 version = "0.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a3353f22e2bcc451074d4feaa37317d9d17dff11d4311928384734ea17ab9ca"
 dependencies = [
- "server_fn_macro",
+ "server_fn_macro 0.5.7",
+ "syn 2.0.48",
+]
+
+[[package]]
+name = "server_fn_macro_default"
+version = "0.6.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b3b697f47a27c5e25361cb26838c05689aebc1659a561c4376e72e2e5165eb4c"
+dependencies = [
+ "server_fn_macro 0.6.3",
  "syn 2.0.48",
 ]
 
@@ -3485,6 +3728,19 @@ name = "wasm-bindgen-shared"
 version = "0.2.90"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4d91413b1c31d7539ba5ef2451af3f0b833a005eb27a631cec32bc0635a8602b"
+
+[[package]]
+name = "wasm-streams"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b65dc4c90b63b118468cf747d8bf3566c1913ef60be765b5730ead9e0a3ba129"
+dependencies = [
+ "futures-util",
+ "js-sys",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
 
 [[package]]
 name = "web-sys"
