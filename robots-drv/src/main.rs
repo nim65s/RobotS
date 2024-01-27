@@ -1,12 +1,11 @@
 use tokio::time::{interval, Duration};
 
-use robots_drv::{driver, Cmd, Result, RX, TX};
+use robots_drv::{driver, get_port, Cmd, RX, TX, Result};
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let port = option_env!("ROBOTS_PORT").unwrap_or("/dev/ttyUSB0");
     let rgb = option_env!("ROBOTS_RGB").unwrap_or("false") == "true";
-    let uart_port = serialport::new(port, 115_200);
+    let uart_port = serialport::new(get_port()?, 115_200);
 
     driver(uart_port)?;
     let tx = TX.clone();

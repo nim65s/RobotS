@@ -3,6 +3,9 @@ pub mod cmd_logger;
 
 use cfg_if::cfg_if;
 
+pub mod error;
+pub use error::{Error, Result};
+
 cfg_if! {
 if #[cfg(feature = "hydrate")] {
 

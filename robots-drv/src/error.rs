@@ -11,6 +11,18 @@ pub enum Error {
 
     #[error("Tokio serial error: {0}")]
     TokioSerial(#[from] tokio_serial::Error),
+
+    #[error("String error: {0:?}")]
+    OsString(std::ffi::OsString),
+
+    #[error("Glob pattern error: {0}")]
+    Pattern(#[from] glob::PatternError),
+
+    #[error("Glob pattern error: {0}")]
+    Glob(#[from] glob::GlobError),
+
+    #[error("Device is not connected")]
+    Disconnected,
 }
 
 pub type Result<T> = core::result::Result<T, Error>;

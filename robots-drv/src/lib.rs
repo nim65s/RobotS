@@ -59,3 +59,12 @@ pub fn driver(port: SerialPortBuilder) -> Result<()> {
     tokio::spawn(async move { drv.run().await });
     Ok(())
 }
+
+pub fn get_port() -> Result<String> {
+    if let Some(port) = option_env!("ROBOTS_PORT") {
+        return Ok(port.to_string());
+    }
+    let path = glob::glob("/dev/tty[UA][SC][BM]?")?.last();
+    let path = path.ok_or(Error::Disconnected)??.into_os_string();
+    path.into_string().map_err(Error::OsString)
+}

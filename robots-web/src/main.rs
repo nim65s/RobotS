@@ -7,12 +7,12 @@ cfg_if::cfg_if! {
         use leptos::*;
         use leptos_actix::{generate_route_list, LeptosRoutes};
         use futures::StreamExt;
-        use robots_lib::{Error, Result};
 
-        use robots_drv::{RX, driver};
+        use robots_drv::{RX, driver, get_port};
 
         //use robots_web::cmd_logger::SendCmd;
         use robots_web::app::App;
+        use robots_web::error::{Error, Result};
 
         #[get("/api/sse")]
         async fn uart_rx_to_sse() -> impl Responder {
@@ -26,8 +26,7 @@ cfg_if::cfg_if! {
             println!("main start");
 
             // setup uart
-            let port = option_env!("ROBOTS_PORT").unwrap_or("/dev/ttyUSB0");
-            let uart_port = serialport::new(port, 115_200);
+            let uart_port = serialport::new(get_port()?, 115_200);
             if let Err(e) = driver(uart_port) {
                 eprintln!("uart driver error: {e:?}");
                 return Err(Error::UartDriver)
