@@ -177,7 +177,7 @@ async fn main(spawner: Spawner) {
     let btn = io.pins.gpio9.into_pull_up_input();
 
     let timer_group0 = esp32c3_hal::timer::TimerGroup::new(peripherals.TIMG0, &clocks);
-    embassy::init(&clocks, timer_group0.timer0);
+    embassy::init(&clocks, timer_group0);
 
     let recv_sig = make_static!(Signal::new());
     let send_sig = make_static!(Signal::new());

@@ -7,19 +7,19 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 critical-section = "1.1.2"
-embassy-executor = { version = "0.4.0", features = ["nightly", "integrated-timers", "arch-riscv32"] }
-embassy-sync = "0.5.0"
-embassy-time = { version = "0.2.0", features = ["tick-hz-1_000_000"] }
-embedded-hal-async = "=1.0.0-rc.2"
-embedded-io-async = "0.6.1"
-esp-backtrace = { version = "0.9.0", features = ["esp32c3", "panic-handler", "exception-handler", "print-uart"] }
-esp-hal-common = { version = "0.14.0", features = ["esp32c3", "embassy", "embassy-time-timg0", "async", "embassy-executor-thread"] }
-esp-hal-smartled = { version = "0.7.0", features = ["esp32c3"] }
-esp-println = { version = "0.7.1", features = ["esp32c3"] }
-esp32c3-hal = "0.14.0"
+embassy-executor = { version = "0.5", features = ["nightly", "integrated-timers", "arch-riscv32"] }
+embassy-sync = "0.5"
+embassy-time = { version = "0.3", features = ["tick-hz-1_000_000"] }
+embedded-hal-async = "1"
+embedded-io-async = "0.6"
+esp-backtrace = { version = "0.10", features = ["esp32c3", "panic-handler", "exception-handler", "print-uart"] }
+esp-hal-common = { version = "0.15", features = ["esp32c3", "embassy", "embassy-time-timg0", "async", "embassy-executor-thread"] }
+esp-hal-smartled = { version = "0.8", features = ["esp32c3"] }
+esp-println = { version = "0.8", features = ["esp32c3"] }
+esp32c3-hal = "0.15.0"
 heapless = "0.8"
 robots-lib = { path = "../robots-lib", features = ["esp32c3"] }
-smart-leds = "0.3.0"
+smart-leds = "0.4"
 static_cell = { version = "2.0.0", features = ["nightly"] }
 
 [features]
