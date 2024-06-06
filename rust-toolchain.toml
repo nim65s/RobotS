@@ -1,0 +1,5 @@
+[toolchain]
+channel = "nightly"
+components = [ "rust-src" ]
+targets = [ "thumbv7m-none-eabi", "wasm32-unknown-unknown" ]
+profile = "default"
