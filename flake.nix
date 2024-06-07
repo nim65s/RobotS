@@ -20,9 +20,12 @@
           PKG_CONFIG_PATH = "${pkgs.udev.dev}/lib/pkgconfig";
           buildInputs = with pkgs; [
             (rust-bin.fromRustupToolchainFile  ./rust-toolchain.toml)
+            cargo-espflash
+            cargo-leptos
             cargo-sort
             just
             sass
+            probe-rs
             tailwindcss
           ];
         };
