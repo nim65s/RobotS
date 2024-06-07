@@ -39,7 +39,7 @@ pub fn App() -> impl IntoView {
 #[component]
 fn HomePage() -> impl IntoView {
     view! {
-        <h1 class="text-white text-4xl my-4">"Welcome to Leptos!"</h1>
+        //<h1 class="text-white text-4xl my-4">"Welcome to Leptos!"</h1>
         <CmdLogger />
     }
 }
